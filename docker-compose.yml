@@ -1,0 +1,22 @@
+services:
+  lantern:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # development keeps the demo accounts endpoint and auto seeds an empty database
+      APP_ENV: ${APP_ENV:-development}
+      SECRET_KEY: ${SECRET_KEY:-dev-only-change-me}
+      LLM_PROVIDER: ${LLM_PROVIDER:-auto}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-claude-sonnet-5-5}
+      DATABASE_URL: sqlite:////app/data/lantern.db
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    volumes:
+      - lantern-data:/app/data
+      - lantern-logs:/app/logs
+    restart: unless-stopped
+
+volumes:
+  lantern-data:
+  lantern-logs:

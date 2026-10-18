@@ -12,9 +12,15 @@ def get_provider(name: str | None = None) -> LLMProvider:
     if name in _cache:
         return _cache[name]
     if name == "anthropic":
-        from .anthropic_provider import AnthropicProvider
+        try:
+            from .anthropic_provider import AnthropicProvider
 
-        provider: LLMProvider = AnthropicProvider()
+            provider: LLMProvider = AnthropicProvider()
+        except Exception as exc:  # missing key or SDK: degrade safely rather than failing every request
+            import logging
+
+            logging.getLogger("lantern").warning("Claude API provider unavailable (%s); using the deterministic provider", exc)
+            provider = DeterministicProvider()
     else:
         provider = DeterministicProvider()
     _cache[name] = provider

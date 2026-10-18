@@ -2,7 +2,7 @@
 the customer can download or forward through any channel (assisted mode)."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from ..config import settings
@@ -15,7 +15,7 @@ def build_pack(claim: Claim, policy: Policy | None, customer: User, documents: l
     lang = claim.language or "en"
     pack = {
         "claim_reference": claim.reference,
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "language": lang,
         "policy_number": policy.policy_number if policy else None,
         "policy": {

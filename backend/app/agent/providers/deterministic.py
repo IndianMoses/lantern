@@ -96,7 +96,10 @@ class DeterministicProvider:
         done = list(context["results"]) if context.get("results") is not None else _done_calls(messages, idx)
         intent: Intent = context.get("intent") or classify(text, context.get("conversation_context"))
         lang = context.get("language") or intent.language
-        conv = context.get("conversation_context") or {}
+        conv = dict(context.get("conversation_context") or {})
+        prev_user = [b["text"] for m in messages[:idx] if m["role"] == "user" for b in m["content"] if isinstance(b, dict) and b.get("type") == "text"]
+        if prev_user:
+            conv["_previous_user_text"] = prev_user[-1]
         surface = context.get("surface", "customer")
         if surface == "insurer_copilot":
             return self._insurer(text, done, available, lang, conv)
@@ -110,7 +113,10 @@ class DeterministicProvider:
 
     def _plan_policy_question(self, text, intent, done, available, conv, lang):
         if not done and "search_policy_wording" in available:
-            return _tc("search_policy_wording", query=text, top_k=6)
+            args: dict[str, Any] = {"query": text, "top_k": 6}
+            if conv.get("policy_id"):
+                args["policy_ids"] = [conv["policy_id"]]
+            return _tc("search_policy_wording", **args)
         res = _result(done, "search_policy_wording")
         return compose_policy_answer(text, res, lang)
 
@@ -163,7 +169,18 @@ class DeterministicProvider:
         target = _pick_claim(claims, conv.get("claim_id"), prefer_open=True)
         kind = intent.comm_kind or "progress_update"
         if not _result(done, "create_communication_draft"):
-            return _tc("create_communication_draft", kind=kind, claim_id=target["id"] if target else None, points=_extract_points(text))
+            points = _extract_points(text)
+            previous = conv.get("_previous_user_text")
+            if kind == "coverage_question" and not points and previous:
+                topic = _topic(previous)
+                points = [_L(lang, f"whether the policy covers {topic}, and under which clause", f"保单是否承保{topic}，依据哪一条款")]
+            args: dict[str, Any] = {"kind": kind, "points": points}
+            if kind == "coverage_question" and not target:
+                if conv.get("policy_id"):
+                    args["policy_id"] = conv["policy_id"]
+            elif target:
+                args["claim_id"] = target["id"]
+            return _tc("create_communication_draft", **args)
         return compose_draft(_result(done, "create_communication_draft"), lang, target)
 
     def _plan_dispute(self, text, intent, done, available, conv, lang):

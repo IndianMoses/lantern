@@ -137,6 +137,7 @@ def run_turn(db: Session, user: User, conversation: Conversation, text: str, *, 
     oplog = OperationLog(run.id, user_id=user.id, surface=surface, provider=provider.name, model=run.model, prompt_version=PROMPT_VERSION, intent=intent.name)
     oplog.write("intent_classified", intent=intent.name, confidence=intent.confidence, language=language, incident_type=intent.incident_type, comm_kind=intent.comm_kind, attachments=[{"id": d.id, "flags": len(d.injection_flags or [])} for d in attachments])
 
+    messages = _history(db, conversation)  # before the new message is stored, so it is not duplicated
     user_msg = Message(conversation_id=conversation.id, role="user", content=text, blocks=[{"type": "attachments", "documents": [{"id": d.id, "filename": d.filename, "doc_type": d.doc_type, "injection_flags": len(d.injection_flags or [])} for d in attachments]}] if attachments else [], language=language)
     db.add(user_msg)
     db.flush()
@@ -146,9 +147,11 @@ def run_turn(db: Session, user: User, conversation: Conversation, text: str, *, 
     tool_schemas = [{"name": s.name, "description": s.description + f" (tier {s.tier})", "input_schema": s.json_schema()} for s in specs]
     context_text = _context_block(db, user, conversation, language, surface)
     system = customer_system(context_text) if surface == "customer" else insurer_system(context_text, language)
-    messages = _history(db, conversation)
     current = text if not attachments else text + "\n\n" + _attachment_block(attachments)
-    messages.append({"role": "user", "content": [{"type": "text", "text": current}]})
+    if messages and messages[-1]["role"] == "user":
+        messages[-1]["content"].append({"type": "text", "text": current})
+    else:
+        messages.append({"role": "user", "content": [{"type": "text", "text": current}]})
     results_so_far: list[tuple[str, dict, dict]] = []
     provider_ctx = {"intent": intent, "language": language, "conversation_context": conv_ctx, "surface": surface, "results": results_so_far}
 

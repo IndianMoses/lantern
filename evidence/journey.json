@@ -1,0 +1,589 @@
+{
+  "provider": "deterministic",
+  "generated_at": "2026-10-18T15:56:34.997034+00:00",
+  "steps": [
+    {
+      "step": "1 policy question with clause citations",
+      "actor": "Alex Tan",
+      "request": "POST /api/assistant/conversations/c1b68828-e981-4ebe-9e70-27ff93449c4c/messages  «Is my bike covered at work?»",
+      "status": 200,
+      "note": "",
+      "assistant_excerpt": "**What your wording states**\n- **[NGM-HC-204481 §2.6]** Pedal cycles: Pedal cycles are covered as contents while in the home. Away from the home, pedal cycles are covered for theft and accidental damage only if the Personal Possessions extension is selected, and the most we will pay for any one pedal cycle…\n- **[NGM-HC-204481 §2.5]** Personal possessions away from the home (optional extension): If your schedule shows that the Personal Possessions extension is selected, we will pay for loss, thef",
+      "run": {
+        "id": "51fb8dbe-e645-4501-bac1-12458d25f0ed",
+        "intent": "policy_question",
+        "provider": "deterministic",
+        "status": "completed",
+        "grounding": {
+          "citations_valid": 4,
+          "citations_unverified": 0,
+          "unverified": [],
+          "caution_banner": false
+        }
+      },
+      "tools": [
+        [
+          "search_policy_wording",
+          0,
+          "ok"
+        ]
+      ],
+      "blocks": [
+        "citations"
+      ]
+    },
+    {
+      "step": "2 unsupported question is refused, not guessed",
+      "actor": "Alex Tan",
+      "request": "POST /api/assistant/conversations/3046e47d-c025-4271-836f-68c8bde997b4/messages  «does it cover my cat»",
+      "status": 200,
+      "note": "",
+      "assistant_excerpt": "I searched the wording of ALB-MC-77120, HLB-PK-TR-0092, NGM-HC-204481, MER-TR-55093 and did not find a clause that deals with this. I would rather tell you that than guess.\n\nWhat that means: the wording I hold does not address it, which is not the same as it being excluded. The insurer can confirm.\n\n**Next step:** I can draft a short question to your insurer: *\"Please confirm in writing whether my policy covers my cat, and under which clause.\"* Say \"draft that\" and I will prepare it for your app",
+      "run": {
+        "id": "163c0a52-2715-41a5-93b0-52200724f021",
+        "intent": "policy_question",
+        "provider": "deterministic",
+        "status": "completed",
+        "grounding": {
+          "citations_valid": 0,
+          "citations_unverified": 0,
+          "unverified": [],
+          "caution_banner": false
+        }
+      },
+      "tools": [
+        [
+          "search_policy_wording",
+          0,
+          "ok"
+        ]
+      ],
+      "blocks": []
+    },
+    {
+      "step": "3 coverage gap analysis",
+      "actor": "Alex Tan",
+      "request": "POST /api/assistant/conversations/c50dce4d-c1e7-4d86-8414-3d9f555d5706/messages  «Find gaps and overlaps in my insurance»",
+      "status": 200,
+      "note": "",
+      "assistant_excerpt": "I checked 7 declared assets and 4 activities against 4 active policies. Result: **0 gaps, 4 partial, 1 duplicate, 5 covered**.\n\n🟠 **Bicycle away from home** — Your bicycle is worth 1,200 GBP but the policy pays at most 350 GBP for an unspecified cycle, and away from home only when locked to a fixed object. It is effectively uninsured for most of its value. [NGM-HC-204481 §2.6]\n  - Suggested: Ask the insurer to list the bike individually in the schedule (specified item) or buy a cycle policy.\n\n🟠 ",
+      "run": {
+        "id": "789457ef-447c-4e4a-bd1c-d62cb8435d79",
+        "intent": "gap_analysis",
+        "provider": "deterministic",
+        "status": "completed",
+        "grounding": {
+          "citations_valid": 12,
+          "citations_unverified": 0,
+          "unverified": [],
+          "caution_banner": false
+        }
+      },
+      "tools": [
+        [
+          "analyze_coverage_gaps",
+          1,
+          "ok"
+        ]
+      ],
+      "blocks": [
+        "gap_findings",
+        "citations"
+      ]
+    },
+    {
+      "step": "4 incident reported -> claim draft + checklist",
+      "actor": "Alex Tan",
+      "request": "POST /api/assistant/conversations/281ed271-4eda-4802-8d62-b47d8782f0cf/messages  «My road bike was stolen from outside the office yesterday. It was locked to the rack and I reported it to the police. It's worth £1,200.»",
+      "status": 200,
+      "note": "",
+      "assistant_excerpt": "I'm sorry about this. I have opened claim **CLM-2026-100815** against **Northgate Mutual HomeSure Buildings & Contents** (NGM-HC-204481) with what you told me; nothing has been sent to the insurer.\n\n**Coverage reading:** Northgate Mutual HomeSure Buildings & Contents (NGM-HC-204481) appears to include this type of cover under [NGM-HC-204481 §2.6], [NGM-HC-204481 §2.7], [NGM-HC-204481 §2.2], subject to the policy's terms, limits and exclusions. An exclusion may be relevant: [NGM-HC-204481 §3.3] (",
+      "run": {
+        "id": "edfeb1d4-7e42-491f-9df4-d22e665f036d",
+        "intent": "claim_start",
+        "provider": "deterministic",
+        "status": "completed",
+        "grounding": {
+          "citations_valid": 7,
+          "citations_unverified": 0,
+          "unverified": [],
+          "caution_banner": false
+        }
+      },
+      "tools": [
+        [
+          "assess_incident_coverage",
+          1,
+          "ok"
+        ],
+        [
+          "create_claim_draft",
+          1,
+          "ok"
+        ]
+      ],
+      "blocks": [
+        "claim_card",
+        "checklist",
+        "citations"
+      ]
+    },
+    {
+      "step": "5 assistant identifies missing information",
+      "actor": "Alex Tan",
+      "request": "POST /api/assistant/conversations/281ed271-4eda-4802-8d62-b47d8782f0cf/messages  «What documents do I still need to provide?»",
+      "status": 200,
+      "note": "",
+      "assistant_excerpt": "**CLM-2026-100815** (Northgate Mutual HomeSure Buildings & Contents): last known status **Information required**, recorded by platform at 2026-10-18 15:56.\n\nIt has not been submitted yet (progress 50%). Still missing: photos, proof_of_ownership, police_report, location.\n\n**Recent activity:**\n- 2026-10-18 · Claim draft created\n- 2026-10-18 · Checklist has outstanding required items",
+      "run": {
+        "id": "36e51a8f-ef4f-4a95-9be4-5f77646c6626",
+        "intent": "claim_followup",
+        "provider": "deterministic",
+        "status": "completed",
+        "grounding": {
+          "citations_valid": 0,
+          "citations_unverified": 0,
+          "unverified": [],
+          "caution_banner": false
+        }
+      },
+      "tools": [
+        [
+          "list_claims",
+          0,
+          "ok"
+        ],
+        [
+          "get_claim_details",
+          0,
+          "ok"
+        ],
+        [
+          "get_claim_timeline",
+          0,
+          "ok"
+        ]
+      ],
+      "blocks": []
+    },
+    {
+      "step": "6 customer completes facts",
+      "actor": "Alex Tan",
+      "request": "PATCH /api/claims/927796dd-db11-4130-aac0-ca691c1918cc",
+      "status": 200,
+      "note": "",
+      "claim_status": "information_required"
+    },
+    {
+      "step": "7 upload evidence: police_report",
+      "actor": "Alex Tan",
+      "request": "POST /api/documents/upload",
+      "status": 200,
+      "note": "",
+      "claim_status": "information_required"
+    },
+    {
+      "step": "7 upload evidence: proof_of_ownership",
+      "actor": "Alex Tan",
+      "request": "POST /api/documents/upload",
+      "status": 200,
+      "note": "",
+      "claim_status": "information_required"
+    },
+    {
+      "step": "7 upload evidence: photos",
+      "actor": "Alex Tan",
+      "request": "POST /api/documents/upload",
+      "status": 200,
+      "note": "",
+      "claim_status": "ready_for_review"
+    },
+    {
+      "step": "8 tier 2 tool prepares approval, nothing sent",
+      "actor": "Alex Tan",
+      "request": "POST /api/assistant/conversations/281ed271-4eda-4802-8d62-b47d8782f0cf/messages  «submit the claim»",
+      "status": 200,
+      "note": "",
+      "assistant_excerpt": "Ready for your approval. **Nothing has been sent yet.**\n\n**Action:** Submit claim CLM-2026-100815 to Northgate Mutual with 3 document(s).\n\n**What happens if you approve:**\n- The incident details, item list and the documents listed will be shared with the insurer.\n- After submission the claim can no longer be edited here; further information goes through the insurer's requests.\n- The insurer, not this assistant, decides whether the claim is covered.\n- This demonstration environment sends the pack",
+      "run": {
+        "id": "281c5eb7-36ac-43a3-a0ba-7bd9e2403c4c",
+        "intent": "approve_send",
+        "provider": "deterministic",
+        "status": "awaiting_approval",
+        "grounding": {
+          "citations_valid": 0,
+          "citations_unverified": 0,
+          "unverified": [],
+          "caution_banner": false
+        }
+      },
+      "tools": [
+        [
+          "submit_claim",
+          2,
+          "approval_required"
+        ]
+      ],
+      "blocks": [
+        "approval"
+      ]
+    },
+    {
+      "step": "9 insurer cannot see the claim before approval",
+      "actor": "Jordan Reyes",
+      "request": "GET /api/insurer/claims/927796dd-db11-4130-aac0-ca691c1918cc",
+      "status": 404,
+      "note": "expected 404"
+    },
+    {
+      "step": "10 customer approves -> mock insurer submission",
+      "actor": "Alex Tan",
+      "request": "POST /api/approvals/057b9cc7-1392-4530-a9b2-960e79b83fca/approve",
+      "status": 200,
+      "note": "",
+      "approval": {
+        "id": "057b9cc7-1392-4530-a9b2-960e79b83fca",
+        "action_type": "submit_claim",
+        "status": "consumed",
+        "result": {
+          "submission_id": "27aa3106-bcc2-4638-b988-bdeb60dbe20a",
+          "status": "succeeded",
+          "insurer_reference": "NORT-ACK-59809",
+          "error": null,
+          "claim_status": "submitted",
+          "mock": true
+        }
+      }
+    },
+    {
+      "step": "11 replayed approval is rejected (idempotent)",
+      "actor": "Alex Tan",
+      "request": "POST /api/approvals/057b9cc7-1392-4530-a9b2-960e79b83fca/approve",
+      "status": 400,
+      "note": "expected 400"
+    },
+    {
+      "step": "12 customer tracks status",
+      "actor": "Alex Tan",
+      "request": "POST /api/assistant/conversations/281ed271-4eda-4802-8d62-b47d8782f0cf/messages  «What's the status of my claim?»",
+      "status": 200,
+      "note": "",
+      "assistant_excerpt": "**CLM-2026-100815** (Northgate Mutual HomeSure Buildings & Contents): last known status **Submitted**, recorded by adapter at 2026-10-18 15:56.\nInsurer reference: NORT-ACK-59809.\n\n**Recent activity:**\n- 2026-10-18 · Checklist complete: ready for your review\n- 2026-10-18 · Submission prepared; awaiting customer approval\n- 2026-10-18 · Approval requested to submit the claim pack\n- 2026-10-18 · Submitted via mock_insurer; mock acknowledgement reference NORT-ACK-59809",
+      "run": {
+        "id": "5021b025-68d7-4fce-b6c6-de10b2e60500",
+        "intent": "claim_followup",
+        "provider": "deterministic",
+        "status": "completed",
+        "grounding": {
+          "citations_valid": 0,
+          "citations_unverified": 0,
+          "unverified": [],
+          "caution_banner": false
+        }
+      },
+      "tools": [
+        [
+          "list_claims",
+          0,
+          "ok"
+        ],
+        [
+          "get_claim_details",
+          0,
+          "ok"
+        ],
+        [
+          "get_claim_timeline",
+          0,
+          "ok"
+        ]
+      ],
+      "blocks": []
+    },
+    {
+      "step": "13 insurer workspace shows the claim",
+      "actor": "Jordan Reyes",
+      "request": "GET /api/insurer/claims/927796dd-db11-4130-aac0-ca691c1918cc",
+      "status": 200,
+      "note": "",
+      "claim_status": "submitted"
+    },
+    {
+      "step": "14 handler assigns to self (acknowledged)",
+      "actor": "Jordan Reyes",
+      "request": "POST /api/insurer/claims/927796dd-db11-4130-aac0-ca691c1918cc/assign",
+      "status": 200,
+      "note": ""
+    },
+    {
+      "step": "15 insurer copilot summary (tier <= 1, sources labelled)",
+      "actor": "Jordan Reyes",
+      "request": "POST /api/assistant/conversations/9cac4ae5-0657-4fe9-bf28-68e9ffb61bf9/messages",
+      "status": 200,
+      "note": "",
+      "assistant_excerpt": "**Case summary — CLM-2026-100815** (status acknowledged, normal priority)\n- [customer statement] theft on 2026-10-17 at Bike rack outside the office: My road bike was stolen from outside the office yesterday. It was locked to the rack and I reported it to the police. It's worth £1,200.\n- [customer statement] estimated loss 1,200; items: Road bike (1200)\n- [document: crime-reference.txt] type other, extraction done, excerpt: West Midlands Police crime reference WM/2026/555123 theft of pedal cycle",
+      "run": {
+        "id": "f499c12c-d1c5-4747-a4d9-df1aaf4a3769",
+        "intent": "general",
+        "provider": "deterministic",
+        "status": "completed",
+        "grounding": {
+          "citations_valid": 0,
+          "citations_unverified": 4,
+          "unverified": [
+            "NGM-HC-204481 §2.2",
+            "NGM-HC-204481 §2.6",
+            "NGM-HC-204481 §2.7",
+            "NGM-HC-204481 §3.3"
+          ],
+          "caution_banner": false
+        }
+      },
+      "tools": [
+        [
+          "insurer_get_claim",
+          0,
+          "ok"
+        ]
+      ],
+      "blocks": [
+        "warning"
+      ]
+    },
+    {
+      "step": "16 handler requests more information",
+      "actor": "Jordan Reyes",
+      "request": "POST /api/insurer/claims/927796dd-db11-4130-aac0-ca691c1918cc/request-information",
+      "status": 200,
+      "note": ""
+    },
+    {
+      "step": "17 customer response prepared (approval required)",
+      "actor": "Alex Tan",
+      "request": "POST /api/claims/927796dd-db11-4130-aac0-ca691c1918cc/information-requests/6a10f4cb-035e-4eca-8cd1-9d437628f127/respond",
+      "status": 200,
+      "note": "",
+      "approval": {
+        "id": "6f290cfc-2f08-478a-bc9b-2819d82ed41c",
+        "action_type": "respond_information_request",
+        "status": "pending",
+        "result": {}
+      }
+    },
+    {
+      "step": "18 customer approves response -> under review",
+      "actor": "Alex Tan",
+      "request": "POST /api/approvals/6f290cfc-2f08-478a-bc9b-2819d82ed41c/approve",
+      "status": 200,
+      "note": "",
+      "approval": {
+        "id": "6f290cfc-2f08-478a-bc9b-2819d82ed41c",
+        "action_type": "respond_information_request",
+        "status": "consumed",
+        "result": {
+          "request_id": "6a10f4cb-035e-4eca-8cd1-9d437628f127",
+          "status": "answered",
+          "claim_status": "under_review"
+        }
+      }
+    },
+    {
+      "step": "19 human handler records the decision (never the AI)",
+      "actor": "Jordan Reyes",
+      "request": "POST /api/insurer/claims/927796dd-db11-4130-aac0-ca691c1918cc/decision",
+      "status": 200,
+      "note": ""
+    },
+    {
+      "step": "20 assistant explains the decision and drafts a review request",
+      "actor": "Alex Tan",
+      "request": "POST /api/assistant/conversations/281ed271-4eda-4802-8d62-b47d8782f0cf/messages  «Explain why my claim was only partly approved and help me ask for a review»",
+      "status": 200,
+      "note": "",
+      "assistant_excerpt": "**What the insurer decided on CLM-2026-100815:** partially approved on 2026-10-18 by Jordan Reyes.\n**Their stated reason:** Theft of the pedal cycle away from home is covered under clause 2.6, limited to £350 for an unspecified cycle; the £250 excess is deducted under clause 5.1.\n\n**Clauses they relied on, in the wording:**\n- **[NGM-HC-204481 §2.6]** Pedal cycles: Pedal cycles are covered as contents while in the home. Away from the home, pedal cycles are covered for theft and accidental damage ",
+      "run": {
+        "id": "5cba957c-05d9-46e9-ba99-010d5d88a5c7",
+        "intent": "dispute",
+        "provider": "deterministic",
+        "status": "completed",
+        "grounding": {
+          "citations_valid": 3,
+          "citations_unverified": 0,
+          "unverified": [],
+          "caution_banner": false
+        }
+      },
+      "tools": [
+        [
+          "list_claims",
+          0,
+          "ok"
+        ],
+        [
+          "get_claim_decision",
+          0,
+          "ok"
+        ],
+        [
+          "create_communication_draft",
+          1,
+          "ok"
+        ]
+      ],
+      "blocks": [
+        "communication_draft",
+        "citations"
+      ]
+    },
+    {
+      "step": "21 insurer dashboard metrics",
+      "actor": "Jordan Reyes",
+      "request": "GET /api/insurer/dashboard",
+      "status": 200,
+      "note": "{\"total_policies_managed\": 8, \"active_policies\": 7, \"new_claims_7d\": 2, \"open_claims\": 4, \"awaiting_customer_information\": 1, \"awaiting_handler_action\": 3, \"decided\": 3, \"settled\": 1, \"avg_processing_days\": 16.3, \"avg_first_response_hours\": 32.0, \"sla_breaches\": 3, \"renewals_next_60_days\": 0, \"communications_30d\": 6, \"claim_frequency\": 0.875}"
+    },
+    {
+      "step": "22 upload with prompt injection is flagged",
+      "actor": "Alex Tan",
+      "request": "POST /api/documents/upload",
+      "status": 200,
+      "note": "flags=2"
+    },
+    {
+      "step": "23 injected instructions are ignored; no tier 2 call",
+      "actor": "Alex Tan",
+      "request": "POST /api/assistant/conversations/746ae63d-64fc-4284-83e3-dacd69518110/messages  «Please read this document and tell me what it says about my cover»",
+      "status": 200,
+      "note": "",
+      "assistant_excerpt": "**What your wording states**\n- **[NGM-HC-204481 §2.3]** Accidental damage to contents (optional extension): If your schedule shows that the Accidental Damage extension is selected, we will pay for accidental damage to contents while in the home. Your schedule for this policy shows that the Accidental Damage extension is NOT selected. Without…\n- **[NGM-HC-204481 §4.3]** Fraud: If you or anyone acting for you makes a claim knowing it to be false or exaggerated, or provides false documents, we will",
+      "run": {
+        "id": "065d0f10-b8a8-4f0b-93c7-318081d26f08",
+        "intent": "policy_question",
+        "provider": "deterministic",
+        "status": "completed",
+        "grounding": {
+          "citations_valid": 4,
+          "citations_unverified": 0,
+          "unverified": [],
+          "caution_banner": false
+        }
+      },
+      "tools": [
+        [
+          "search_policy_wording",
+          0,
+          "ok"
+        ]
+      ],
+      "blocks": [
+        "citations",
+        "warning"
+      ]
+    },
+    {
+      "step": "24 other insurer tenant cannot read the claim",
+      "actor": "王磊",
+      "request": "GET /api/insurer/claims/927796dd-db11-4130-aac0-ca691c1918cc",
+      "status": 404,
+      "note": "expected 404"
+    },
+    {
+      "step": "25 中文 policy question (exclusion identified)",
+      "actor": "李雯",
+      "request": "POST /api/assistant/conversations/44ca703f-a9d8-42e5-82fa-adaa721eaa77/messages  «充电起火算不算？»",
+      "status": 200,
+      "note": "",
+      "assistant_excerpt": "**保单条款原文**\n- **[PCAB-EB-2026-10377 §6]** 责任免除: 下列原因造成的损失、费用和责任，保险人不负责赔偿：（一）驾驶人饮酒、吸食或注射毒品、服用国家管制的精神药品或麻醉药品；（二）保险车辆未依法登记上牌，或经非法改装提高限速、更换大功率电机或擅自改装电池；（三）锂电池自燃、爆炸，以及充电过程中引起的火灾及其导致的任何损失；（四）利用保险车辆从事载客营运；（五）超载、违反交通法规并构成事故主要原因；（六）自然磨损、锈蚀、故障、本身质量缺陷；（七）战争、军事行动、暴乱、核辐射。\n\n**我的解读**（不是理赔结论，由保险公司决定）：我没有找到承保这一风险的条款；[PCAB-EB-2026-10377 §6]（责任免除）看起来将其列为**除外责任**，我的解读是该保单不会赔付。\n\n**下一步：**如果是已经发生的事情，告诉我经过，我会核对理赔条件并开始准备理赔材料；如需在依赖前得到确认，我可以起草给保险公司的书面问题。",
+      "run": {
+        "id": "e4502762-0c97-4dba-bafb-852cccb0c6bc",
+        "intent": "policy_question",
+        "provider": "deterministic",
+        "status": "completed",
+        "grounding": {
+          "citations_valid": 1,
+          "citations_unverified": 0,
+          "unverified": [],
+          "caution_banner": false
+        }
+      },
+      "tools": [
+        [
+          "search_policy_wording",
+          0,
+          "ok"
+        ]
+      ],
+      "blocks": [
+        "citations"
+      ]
+    },
+    {
+      "step": "26 中文 gap analysis",
+      "actor": "李雯",
+      "request": "POST /api/assistant/conversations/92cff0ee-3a3d-4d83-9187-e7bf6af294ae/messages  «分析我的保障缺口»",
+      "status": 200,
+      "note": "",
+      "assistant_excerpt": "我将你申报的 4 项资产和 2 项活动与 2 份有效保单进行了对照。结果：**缺口 4 项，部分保障 3 项，重复 0 项，已保障 2 项**。\n\n🔴 **家庭财产（家财）保障** — 你的保单中没有承保住所内家财（申报价值 20,000 CNY）的保障。火灾、盗窃或水浸造成的财物损失将无法获赔。 \n  - 建议：建议考虑家财险；租客家财险通常费用不高。\n\n🔴 **在家充电引发火灾** — 你的电动车保单不保充电过程中引起的火灾，而你也没有家财保单来承保火灾造成的财物损失或对邻居的责任。 [PCAB-EB-2026-10377 §6]\n  - 建议：尽量在居住区域外充电，并考虑投保含火灾和责任保障的租客家财险。\n\n🔴 **租客对房东的责任** — 作为租客，你可能需对房东财产的意外损坏负责，目前没有保单承保。 \n  - 建议：租客家财险通常包含此项，请比较方案。\n\n🔴 **笔记本电脑** — 你的笔记本（5,000 CNY）没有任何保单承保，即使在家中也没有。 \n  - 建议：家财险可在家中对火灾、盗窃和水浸提供保障。\n\n🟠 **电动自行车盗抢** — 整车盗抢有保障，但限额（3,00",
+      "run": {
+        "id": "a93889c1-5d56-4039-9b1e-a7d0f7685371",
+        "intent": "gap_analysis",
+        "provider": "deterministic",
+        "status": "completed",
+        "grounding": {
+          "citations_valid": 5,
+          "citations_unverified": 0,
+          "unverified": [],
+          "caution_banner": false
+        }
+      },
+      "tools": [
+        [
+          "analyze_coverage_gaps",
+          1,
+          "ok"
+        ]
+      ],
+      "blocks": [
+        "gap_findings",
+        "citations"
+      ]
+    },
+    {
+      "step": "27 中文 incident -> claim draft",
+      "actor": "李雯",
+      "request": "POST /api/assistant/conversations/52ed6c97-c033-4a9b-92cb-66d960ef5f3c/messages  «我的电动车昨晚在楼下被偷了，已经报警»",
+      "status": 200,
+      "note": "",
+      "assistant_excerpt": "很遗憾发生这样的事。我已根据你的描述在 **鹏城安保 电动自行车综合保险**（PCAB-EB-2026-10377）下建立了理赔 **CLM-2026-100737**，尚未发送给保险公司。\n\n**保障解读：**鹏城安保电动自行车综合保险（PCAB-EB-2026-10377）在 [PCAB-EB-2026-10377 §3]、[PCAB-EB-2026-10377 §5]、[PCAB-EB-2026-10377 §2] 项下看起来包含此类保障，以条款、限额和除外责任为准。通常会扣除 200 CNY 的免赔额（[PCAB-EB-2026-10377 §10]）。\n**需注意的条件：**[PCAB-EB-2026-10377 §9] 索赔程序与所需材料\n\n**提交前还需要：**\n- 损失或现场的照片或视频 [PCAB-EB-2026-10377 §9] — 照片便于保险公司及时评估损失并佐证描述。\n- 物品所有权或价值证明 [PCAB-EB-2026-10377 §9] — 收据、发票、银行记录或照片，用于证明物品归属及价值。\n- 报案回执或承运人报告（含编号） [PCAB-EB-202",
+      "run": {
+        "id": "d47741c0-2398-4064-9554-e6334d4c07f0",
+        "intent": "claim_start",
+        "provider": "deterministic",
+        "status": "completed",
+        "grounding": {
+          "citations_valid": 5,
+          "citations_unverified": 0,
+          "unverified": [],
+          "caution_banner": false
+        }
+      },
+      "tools": [
+        [
+          "assess_incident_coverage",
+          1,
+          "ok"
+        ],
+        [
+          "create_claim_draft",
+          1,
+          "ok"
+        ]
+      ],
+      "blocks": [
+        "claim_card",
+        "checklist",
+        "citations"
+      ]
+    }
+  ]
+}

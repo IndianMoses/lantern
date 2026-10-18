@@ -6,7 +6,7 @@ import re
 from typing import Any
 
 _EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
-_PHONE = re.compile(r"(?<!\d)(?:\+?\d[\d\s\-()]{7,}\d)(?!\d)")
+_PHONE = re.compile(r"(?<![\w.-])(?:\+?\d[\d\s()-]{7,}\d)(?![\w.-])")
 _UK_POSTCODE = re.compile(r"\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b", re.I)
 _CN_ID = re.compile(r"(?<!\d)\d{17}[\dXx](?!\d)")
 _LONG_DIGITS = re.compile(r"(?<!\d)\d{12,19}(?!\d)")  # card and account numbers
@@ -24,7 +24,7 @@ def mask_text(text: str | None) -> str | None:
     out = _IBAN.sub("[iban]", out)
     out = _SORT_CODE_ACCOUNT.sub("[bank-account]", out)
     out = _LONG_DIGITS.sub("[number]", out)
-    out = _PHONE.sub("[phone]", out)
+    out = _PHONE.sub(lambda m: "[phone]" if sum(ch.isdigit() for ch in m.group(0)) >= 9 else m.group(0), out)
     out = _UK_POSTCODE.sub("[postcode]", out)
     return out
 

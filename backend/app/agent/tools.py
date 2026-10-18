@@ -81,7 +81,26 @@ class ToolSpec:
     def json_schema(self) -> dict:
         schema = self.model.model_json_schema()
         schema.pop("title", None)
-        return schema
+        return _inline_refs(schema)
+
+
+def _inline_refs(schema: dict) -> dict:
+    """Resolve local $ref/$defs so every tool schema is a self contained JSON Schema."""
+    defs = schema.pop("$defs", {}) or {}
+
+    def walk(node):
+        if isinstance(node, dict):
+            if "$ref" in node and node["$ref"].startswith("#/$defs/"):
+                target = defs.get(node["$ref"].split("/")[-1], {})
+                merged = {k: v for k, v in target.items() if k != "title"}
+                merged.update({k: v for k, v in node.items() if k != "$ref"})
+                return walk(merged)
+            return {k: walk(v) for k, v in node.items() if not (k == "title" and isinstance(v, str))}
+        if isinstance(node, list):
+            return [walk(v) for v in node]
+        return node
+
+    return walk(schema)
 
 
 class ToolError(Exception):
