@@ -1,0 +1,17 @@
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+# data and logs (local only)
+data/
+logs/
+!logs/.gitkeep
+evidence/*.db
+# frontend
+frontend/node_modules/
+frontend/dist/
+# env
+.env
+*.log
+.DS_Store
