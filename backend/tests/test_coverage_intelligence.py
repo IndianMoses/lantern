@@ -276,7 +276,8 @@ def test_openai_compatible_parsing_and_retry(monkeypatch):
             calls["n"] += 1
             if calls["n"] == 1:
                 return FakeResp("not json at all")
-            return FakeResp('```json\n{"findings":[{"key":"k","need":"contents","title":{"en":"t","zh":"t"},"statement":{"en":"s","zh":"s"},"status":"gap","severity":"high","kind":"potential_gap","clause_ids":[],"policy_numbers":[],"assumptions":[],"missing_information":["x"],"suggested_action":{"en":"a","zh":"a"},"triggered_by":"","rationale":"r"}],"scenarios":[],"missing_information":[],"notes":[]}\n```')
+            # a hybrid reasoning model may prepend a think block; it must be ignored
+            return FakeResp('<think>draft {"findings": []}</think>\n```json\n{"findings":[{"key":"k","need":"contents","title":{"en":"t","zh":"t"},"statement":{"en":"s","zh":"s"},"status":"gap","severity":"high","kind":"potential_gap","clause_ids":[],"policy_numbers":[],"assumptions":[],"missing_information":["x"],"suggested_action":{"en":"a","zh":"a"},"triggered_by":"","rationale":"r"}],"scenarios":[],"missing_information":[],"notes":[]}\n```')
 
     import httpx
 

@@ -1,342 +1,369 @@
 {
   "verification": {
     "ok": true,
-    "checked": 37,
-    "head": "133e10ef05872abca6259c909b28953bd4dfcca0b7b7b1838a87b13d5fba4777"
+    "checked": 53,
+    "head": "bb1d04bc41e024afe826c807a1de38914574db20bfb7552cdf50974da52b535a"
   },
   "last_events": [
     {
-      "seq": 1,
-      "action": "seed.demo_environment",
-      "actor_type": "system",
-      "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.015336",
-      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
-      "hash": "a2c7e87fcc2418517687809e698dcb8dbbb77de6401ce37d9e2a456dda2bd37a"
-    },
-    {
-      "seq": 2,
-      "action": "auth.login",
-      "actor_type": "customer",
-      "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.124928",
-      "prev_hash": "a2c7e87fcc2418517687809e698dcb8dbbb77de6401ce37d9e2a456dda2bd37a",
-      "hash": "f4190105cde748b8a9350930ecb5bc851b351313ceea4a859768ef41c40711d0"
-    },
-    {
-      "seq": 3,
-      "action": "auth.login",
-      "actor_type": "customer",
-      "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.232834",
-      "prev_hash": "f4190105cde748b8a9350930ecb5bc851b351313ceea4a859768ef41c40711d0",
-      "hash": "36d30876d389590d2286cc8f0bbc3a55108090904d1e7d0be11f48e8f287b29e"
-    },
-    {
-      "seq": 4,
+      "seq": 14,
       "action": "auth.login",
       "actor_type": "insurer_handler",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.323768",
-      "prev_hash": "36d30876d389590d2286cc8f0bbc3a55108090904d1e7d0be11f48e8f287b29e",
-      "hash": "c4f209b314a33f19129b1efa67646854d050decfafe946fad28255ea67e6c26c"
-    },
-    {
-      "seq": 5,
-      "action": "agent.run",
-      "actor_type": "agent",
-      "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.387967",
-      "prev_hash": "c4f209b314a33f19129b1efa67646854d050decfafe946fad28255ea67e6c26c",
-      "hash": "b62f653230adf5e6c5083484caf294a1417b5625abd96a195f8ccd534f2cbfc5"
-    },
-    {
-      "seq": 6,
-      "action": "agent.run",
-      "actor_type": "agent",
-      "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.420901",
-      "prev_hash": "b62f653230adf5e6c5083484caf294a1417b5625abd96a195f8ccd534f2cbfc5",
-      "hash": "ca5a6ff31bd349c8a8e8b87fa28b8190626d72ba0af2c7684c7bb9cf70c5b8ef"
-    },
-    {
-      "seq": 7,
-      "action": "gap_analysis.run",
-      "actor_type": "agent",
-      "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.443671",
-      "prev_hash": "ca5a6ff31bd349c8a8e8b87fa28b8190626d72ba0af2c7684c7bb9cf70c5b8ef",
-      "hash": "1f11c732b785a159a574fd636e6a82e28f8274b4d0ce0e109f721cb28f6eb043"
-    },
-    {
-      "seq": 8,
-      "action": "agent.run",
-      "actor_type": "agent",
-      "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.445447",
-      "prev_hash": "1f11c732b785a159a574fd636e6a82e28f8274b4d0ce0e109f721cb28f6eb043",
-      "hash": "0ba3a9edff7f1472816256f3b9bf5f0e44fee7c280c0e515cf086249e2d9cfed"
-    },
-    {
-      "seq": 9,
-      "action": "claim.create_draft",
-      "actor_type": "agent",
-      "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.493934",
-      "prev_hash": "0ba3a9edff7f1472816256f3b9bf5f0e44fee7c280c0e515cf086249e2d9cfed",
-      "hash": "f3616df1f976329b6232010e09309c4754d44d10d0620189b115058551e9a4bc"
-    },
-    {
-      "seq": 10,
-      "action": "agent.run",
-      "actor_type": "agent",
-      "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.497660",
-      "prev_hash": "f3616df1f976329b6232010e09309c4754d44d10d0620189b115058551e9a4bc",
-      "hash": "81a450fb0c8aeb788b6690ea9954c0371d6beec9d4da25051a3fa4c7eb5e20c5"
-    },
-    {
-      "seq": 11,
-      "action": "agent.run",
-      "actor_type": "agent",
-      "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.519093",
-      "prev_hash": "81a450fb0c8aeb788b6690ea9954c0371d6beec9d4da25051a3fa4c7eb5e20c5",
-      "hash": "13ecb263a0ef4d54938e238ba0f465501ffb7c75ca53d1d6f7b2758639952657"
-    },
-    {
-      "seq": 12,
-      "action": "document.upload",
-      "actor_type": "customer",
-      "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.545510",
-      "prev_hash": "13ecb263a0ef4d54938e238ba0f465501ffb7c75ca53d1d6f7b2758639952657",
-      "hash": "d8fea9a3e6d726982ff71bedafb19c51c143b7ba9a44a238e82c1bacded0ebc6"
-    },
-    {
-      "seq": 13,
-      "action": "document.upload",
-      "actor_type": "customer",
-      "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.558141",
-      "prev_hash": "d8fea9a3e6d726982ff71bedafb19c51c143b7ba9a44a238e82c1bacded0ebc6",
-      "hash": "d8859071d3eef4249a14fe45510f4bd348fa07698e2fecbf630615ee0048e397"
-    },
-    {
-      "seq": 14,
-      "action": "document.upload",
-      "actor_type": "customer",
-      "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.569924",
-      "prev_hash": "d8859071d3eef4249a14fe45510f4bd348fa07698e2fecbf630615ee0048e397",
-      "hash": "d25106218671b2f367bbb169d5eb7aadf73a187a728bc746262f130157121afc"
+      "created_at": "2026-10-19T23:07:58.012714",
+      "prev_hash": "da451a4b8e2fb08a90d5288d7ac9e2d4eb290446f18ae183649f578dd814dbbd",
+      "hash": "94bdb57771427d1f30b700761ed731bd08d907eeb402aacb8f63e651184be237"
     },
     {
       "seq": 15,
-      "action": "approval.create",
+      "action": "agent.run",
       "actor_type": "agent",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.592258",
-      "prev_hash": "d25106218671b2f367bbb169d5eb7aadf73a187a728bc746262f130157121afc",
-      "hash": "a0a0b7fa2557a5547712599da343faf9c2959531e82d2d7dc738a05c46294295"
+      "created_at": "2026-10-19T23:07:58.129045",
+      "prev_hash": "94bdb57771427d1f30b700761ed731bd08d907eeb402aacb8f63e651184be237",
+      "hash": "f33a593297d7a8e3ec3e45b3b05d1be6271c3fc7ce4bea49a65a806940d4dfd7"
     },
     {
       "seq": 16,
       "action": "agent.run",
       "actor_type": "agent",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.594272",
-      "prev_hash": "a0a0b7fa2557a5547712599da343faf9c2959531e82d2d7dc738a05c46294295",
-      "hash": "6e7a5e17ff31804d335e640a6dbb5c205a8140474ec049bebaf9a0f5a0fab7bf"
+      "created_at": "2026-10-19T23:07:58.157984",
+      "prev_hash": "f33a593297d7a8e3ec3e45b3b05d1be6271c3fc7ce4bea49a65a806940d4dfd7",
+      "hash": "ab1492bd42b5f52e5d13af00bf13223b5f0b49e96fd5c7c329c18d5c260350d3"
     },
     {
       "seq": 17,
-      "action": "approval.approve",
-      "actor_type": "customer",
+      "action": "gap_analysis.run",
+      "actor_type": "agent",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.618668",
-      "prev_hash": "6e7a5e17ff31804d335e640a6dbb5c205a8140474ec049bebaf9a0f5a0fab7bf",
-      "hash": "3c82203ca9c412186e3c15ccc9a46a43dded542c1c177f5e038473a48e86aee6"
+      "created_at": "2026-10-19T23:07:58.221301",
+      "prev_hash": "ab1492bd42b5f52e5d13af00bf13223b5f0b49e96fd5c7c329c18d5c260350d3",
+      "hash": "27faae0266f3d590023b83b7cc2e5f160ea344e5bd7c4a2f5c2f8f5987357c77"
     },
     {
       "seq": 18,
-      "action": "claim.submit",
-      "actor_type": "customer",
-      "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.625653",
-      "prev_hash": "3c82203ca9c412186e3c15ccc9a46a43dded542c1c177f5e038473a48e86aee6",
-      "hash": "a90603297eb233ca2f14cf79183d12367a1f0d5de2dddf5e963231a66ea8efbd"
-    },
-    {
-      "seq": 19,
       "action": "agent.run",
       "actor_type": "agent",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.650368",
-      "prev_hash": "a90603297eb233ca2f14cf79183d12367a1f0d5de2dddf5e963231a66ea8efbd",
-      "hash": "7edd6b773cd5a44494c5dcad4e26654195dda7a1e89b747d7c253546df51f83a"
+      "created_at": "2026-10-19T23:07:58.226337",
+      "prev_hash": "27faae0266f3d590023b83b7cc2e5f160ea344e5bd7c4a2f5c2f8f5987357c77",
+      "hash": "4371347d5e85aa5e2849d70c85f882d166969a398ec3ce4256ba0a0c62a2295f"
+    },
+    {
+      "seq": 19,
+      "action": "claim.create_draft",
+      "actor_type": "agent",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:58.275122",
+      "prev_hash": "4371347d5e85aa5e2849d70c85f882d166969a398ec3ce4256ba0a0c62a2295f",
+      "hash": "39df42007b3ad178e117f67b54cb654145c5a8bdbade6092654bed95468eb3a5"
     },
     {
       "seq": 20,
-      "action": "claim.assign",
-      "actor_type": "insurer",
+      "action": "agent.run",
+      "actor_type": "agent",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.671385",
-      "prev_hash": "7edd6b773cd5a44494c5dcad4e26654195dda7a1e89b747d7c253546df51f83a",
-      "hash": "936582a245d65adcea3cf7a3a2f859a06dabb5055a1a02c20cec880ff5390261"
+      "created_at": "2026-10-19T23:07:58.278997",
+      "prev_hash": "39df42007b3ad178e117f67b54cb654145c5a8bdbade6092654bed95468eb3a5",
+      "hash": "db2c1e4356233626e4e2689d91c4d1a2ddfb5db31beb18a72584531cc95ee9bb"
     },
     {
       "seq": 21,
       "action": "agent.run",
       "actor_type": "agent",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.690793",
-      "prev_hash": "936582a245d65adcea3cf7a3a2f859a06dabb5055a1a02c20cec880ff5390261",
-      "hash": "af7dec037361eaa2cd4e2f3db0421674e27320605afb679dd8417d0edea7a572"
+      "created_at": "2026-10-19T23:07:58.302636",
+      "prev_hash": "db2c1e4356233626e4e2689d91c4d1a2ddfb5db31beb18a72584531cc95ee9bb",
+      "hash": "ce178269d055fb43a3a7fe2f1002b91395fc8634624ed435e481831383e2e708"
     },
     {
       "seq": 22,
-      "action": "claim.request_information",
-      "actor_type": "insurer",
+      "action": "document.upload",
+      "actor_type": "customer",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.699061",
-      "prev_hash": "af7dec037361eaa2cd4e2f3db0421674e27320605afb679dd8417d0edea7a572",
-      "hash": "cbacf2be65390455013164a09515374750932c2199ba3c8de5c3df7ec752c534"
+      "created_at": "2026-10-19T23:07:58.336833",
+      "prev_hash": "ce178269d055fb43a3a7fe2f1002b91395fc8634624ed435e481831383e2e708",
+      "hash": "35acb135b2a801b543c1d1a6f41eb0a32e754b97eff076289905344bff1aaa2e"
     },
     {
       "seq": 23,
       "action": "document.upload",
       "actor_type": "customer",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.708881",
-      "prev_hash": "cbacf2be65390455013164a09515374750932c2199ba3c8de5c3df7ec752c534",
-      "hash": "7f7bde806c2c9f5b82b5270a96313b47b834579f6a2d61d9b05cb2118f6557a8"
+      "created_at": "2026-10-19T23:07:58.355844",
+      "prev_hash": "35acb135b2a801b543c1d1a6f41eb0a32e754b97eff076289905344bff1aaa2e",
+      "hash": "4c1610243cc83f0c16023dee5b8c9993e06f7adc740789f2c57126ed4ec3640e"
     },
     {
       "seq": 24,
-      "action": "approval.create",
+      "action": "document.upload",
       "actor_type": "customer",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.724185",
-      "prev_hash": "7f7bde806c2c9f5b82b5270a96313b47b834579f6a2d61d9b05cb2118f6557a8",
-      "hash": "342b2690deb91bdc444cd887ec8dc0a52e68efffc901961f6b2546e631126e13"
+      "created_at": "2026-10-19T23:07:58.372234",
+      "prev_hash": "4c1610243cc83f0c16023dee5b8c9993e06f7adc740789f2c57126ed4ec3640e",
+      "hash": "602f5c0a84aaf5e945bb3c9344b6ceb1ec9819845de222ac3110c56375f112ff"
     },
     {
       "seq": 25,
-      "action": "approval.approve",
-      "actor_type": "customer",
+      "action": "approval.create",
+      "actor_type": "agent",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.730283",
-      "prev_hash": "342b2690deb91bdc444cd887ec8dc0a52e68efffc901961f6b2546e631126e13",
-      "hash": "1d017cf4ae0c762ad4c859d3c2fdfb989aa38ae636092e7ea3c7ed2f25478011"
+      "created_at": "2026-10-19T23:07:58.404840",
+      "prev_hash": "602f5c0a84aaf5e945bb3c9344b6ceb1ec9819845de222ac3110c56375f112ff",
+      "hash": "bc1fb5fb84ba316df37fec740822c3eb1333b7d45782d06b2878f68a5a07b908"
     },
     {
       "seq": 26,
-      "action": "claim.respond_information_request",
-      "actor_type": "customer",
+      "action": "agent.run",
+      "actor_type": "agent",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.732668",
-      "prev_hash": "1d017cf4ae0c762ad4c859d3c2fdfb989aa38ae636092e7ea3c7ed2f25478011",
-      "hash": "a023c19f8a0564fe47dc23d86402c24920d7c05a85c88de856c1bc1cfec685a4"
+      "created_at": "2026-10-19T23:07:58.406788",
+      "prev_hash": "bc1fb5fb84ba316df37fec740822c3eb1333b7d45782d06b2878f68a5a07b908",
+      "hash": "9b2c25db15b74f2b21f123acdf68f510d0754c99353bd7c71297b4e23b40a776"
     },
     {
       "seq": 27,
-      "action": "claim.record_decision",
-      "actor_type": "insurer",
+      "action": "approval.approve",
+      "actor_type": "customer",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.743547",
-      "prev_hash": "a023c19f8a0564fe47dc23d86402c24920d7c05a85c88de856c1bc1cfec685a4",
-      "hash": "9102762aee51ab13f3b9408c8b0454b2c3288ce5eb07ee6a736995b6465ae07b"
+      "created_at": "2026-10-19T23:07:58.432225",
+      "prev_hash": "9b2c25db15b74f2b21f123acdf68f510d0754c99353bd7c71297b4e23b40a776",
+      "hash": "afd4bb8093767f0eba02b28ea9e65bd15d0d25712238c53a3f0a8d073234ebba"
     },
     {
       "seq": 28,
-      "action": "communication.draft",
-      "actor_type": "agent",
+      "action": "claim.submit",
+      "actor_type": "customer",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.766826",
-      "prev_hash": "9102762aee51ab13f3b9408c8b0454b2c3288ce5eb07ee6a736995b6465ae07b",
-      "hash": "98801703b971f72a51aa00095a23687084b89df1677cbf54daba57c71ed6a3fd"
+      "created_at": "2026-10-19T23:07:58.440878",
+      "prev_hash": "afd4bb8093767f0eba02b28ea9e65bd15d0d25712238c53a3f0a8d073234ebba",
+      "hash": "1e6603e38a175da8a812b4c4e2a82af5221ce49d6881670fb31ec60926a35389"
     },
     {
       "seq": 29,
       "action": "agent.run",
       "actor_type": "agent",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.768184",
-      "prev_hash": "98801703b971f72a51aa00095a23687084b89df1677cbf54daba57c71ed6a3fd",
-      "hash": "8dcdd56731c2a00728077daedf18f4fe8ef40527a0e6343fa8419d56fcd7b25b"
+      "created_at": "2026-10-19T23:07:58.471684",
+      "prev_hash": "1e6603e38a175da8a812b4c4e2a82af5221ce49d6881670fb31ec60926a35389",
+      "hash": "11e735c158ad535e43e42a3d7af768879e2bb896cf4a3ac007f9fa1690eab502"
     },
     {
       "seq": 30,
-      "action": "document.upload",
-      "actor_type": "customer",
+      "action": "claim.assign",
+      "actor_type": "insurer",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.790545",
-      "prev_hash": "8dcdd56731c2a00728077daedf18f4fe8ef40527a0e6343fa8419d56fcd7b25b",
-      "hash": "272f19e2f48eec298e067b48e0c2fdd45b31b8e35d9ab6cfec9ee93bc184f440"
+      "created_at": "2026-10-19T23:07:58.497217",
+      "prev_hash": "11e735c158ad535e43e42a3d7af768879e2bb896cf4a3ac007f9fa1690eab502",
+      "hash": "569eda7161bc3dbfbac4dabfb3dba4a5a498a69354741f0bf9a457ddddacc3ad"
     },
     {
       "seq": 31,
       "action": "agent.run",
       "actor_type": "agent",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.823914",
-      "prev_hash": "272f19e2f48eec298e067b48e0c2fdd45b31b8e35d9ab6cfec9ee93bc184f440",
-      "hash": "82fc90456a995e8f08b979a8a8d0e4803e19eb5db0ed34e99081e5f1a25d3aa8"
+      "created_at": "2026-10-19T23:07:58.517009",
+      "prev_hash": "569eda7161bc3dbfbac4dabfb3dba4a5a498a69354741f0bf9a457ddddacc3ad",
+      "hash": "e5ac55a01f52872b1a1427d0fff037591fe85f1f6321363c031716dea54a79e4"
     },
     {
       "seq": 32,
-      "action": "auth.login",
-      "actor_type": "insurer_handler",
+      "action": "claim.request_information",
+      "actor_type": "insurer",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.909628",
-      "prev_hash": "82fc90456a995e8f08b979a8a8d0e4803e19eb5db0ed34e99081e5f1a25d3aa8",
-      "hash": "6c82956e12b10220b2e443c9c107b978ac7d533f342261ebc778ec5734bdb934"
+      "created_at": "2026-10-19T23:07:58.525538",
+      "prev_hash": "e5ac55a01f52872b1a1427d0fff037591fe85f1f6321363c031716dea54a79e4",
+      "hash": "2cbc47bc92b45e9d78e9c1e4b343a8dfb0792aaf2e350cbb5d1b0853055b0d95"
     },
     {
       "seq": 33,
-      "action": "agent.run",
-      "actor_type": "agent",
+      "action": "document.upload",
+      "actor_type": "customer",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.936428",
-      "prev_hash": "6c82956e12b10220b2e443c9c107b978ac7d533f342261ebc778ec5734bdb934",
-      "hash": "54190aeea6bf5bcad02ac9bb2145bbb382c5b71738f14a2f2d19f2796c15da95"
+      "created_at": "2026-10-19T23:07:58.536166",
+      "prev_hash": "2cbc47bc92b45e9d78e9c1e4b343a8dfb0792aaf2e350cbb5d1b0853055b0d95",
+      "hash": "4ca100955f1f278828b5be92da6bfefa2bf017ef544075684749699e00504d4d"
     },
     {
       "seq": 34,
-      "action": "gap_analysis.run",
-      "actor_type": "agent",
+      "action": "approval.create",
+      "actor_type": "customer",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.955577",
-      "prev_hash": "54190aeea6bf5bcad02ac9bb2145bbb382c5b71738f14a2f2d19f2796c15da95",
-      "hash": "557ff43201805d8e783e05584ae2c41a8b7ef89c87ccfdf5a1f44d41c4ebcd80"
+      "created_at": "2026-10-19T23:07:58.556138",
+      "prev_hash": "4ca100955f1f278828b5be92da6bfefa2bf017ef544075684749699e00504d4d",
+      "hash": "09114ffea906589d0705e29643d479dba8f1b1868b65308f9fd642ef52e58502"
     },
     {
       "seq": 35,
-      "action": "agent.run",
-      "actor_type": "agent",
+      "action": "approval.approve",
+      "actor_type": "customer",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.956782",
-      "prev_hash": "557ff43201805d8e783e05584ae2c41a8b7ef89c87ccfdf5a1f44d41c4ebcd80",
-      "hash": "459bd9b692243c6db2b2b44cba123dcbf2ae3a9a78e7dc7a46e64013270799b1"
+      "created_at": "2026-10-19T23:07:58.562807",
+      "prev_hash": "09114ffea906589d0705e29643d479dba8f1b1868b65308f9fd642ef52e58502",
+      "hash": "96ad2821b7e793501928f08bd44e374d12253186ef1d99ad41f0874c848e3170"
     },
     {
       "seq": 36,
-      "action": "claim.create_draft",
-      "actor_type": "agent",
+      "action": "claim.respond_information_request",
+      "actor_type": "customer",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.985508",
-      "prev_hash": "459bd9b692243c6db2b2b44cba123dcbf2ae3a9a78e7dc7a46e64013270799b1",
-      "hash": "1e0cf8b4869c3dcd82564dbc513b17667cc8a5de7eff626995292a93eed7fc0a"
+      "created_at": "2026-10-19T23:07:58.565951",
+      "prev_hash": "96ad2821b7e793501928f08bd44e374d12253186ef1d99ad41f0874c848e3170",
+      "hash": "e3e74514e6be137869b7ee59022d2814f5629cfea7464be6cab510382dc87792"
     },
     {
       "seq": 37,
+      "action": "claim.record_decision",
+      "actor_type": "insurer",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:58.577760",
+      "prev_hash": "e3e74514e6be137869b7ee59022d2814f5629cfea7464be6cab510382dc87792",
+      "hash": "b3c71306090c35f33744a434871659827e010166950f1b9074f1c8b7832cb17b"
+    },
+    {
+      "seq": 38,
+      "action": "communication.draft",
+      "actor_type": "agent",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:58.603946",
+      "prev_hash": "b3c71306090c35f33744a434871659827e010166950f1b9074f1c8b7832cb17b",
+      "hash": "561b0e92db31b0d4713c15d2378e530ab56906475a6bda9a40b542902a7ea017"
+    },
+    {
+      "seq": 39,
       "action": "agent.run",
       "actor_type": "agent",
       "outcome": "success",
-      "created_at": "2026-10-18T15:56:34.987724",
-      "prev_hash": "1e0cf8b4869c3dcd82564dbc513b17667cc8a5de7eff626995292a93eed7fc0a",
-      "hash": "133e10ef05872abca6259c909b28953bd4dfcca0b7b7b1838a87b13d5fba4777"
+      "created_at": "2026-10-19T23:07:58.606054",
+      "prev_hash": "561b0e92db31b0d4713c15d2378e530ab56906475a6bda9a40b542902a7ea017",
+      "hash": "3f082d9e1dea2c6a664bd544d705af8081e88807ca8c00e13c46e612242eecc0"
+    },
+    {
+      "seq": 40,
+      "action": "document.upload",
+      "actor_type": "customer",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:58.630522",
+      "prev_hash": "3f082d9e1dea2c6a664bd544d705af8081e88807ca8c00e13c46e612242eecc0",
+      "hash": "574a54d77d79431ba25edfb5c6786f13809ce9f611da407ce173a5afd2004ab2"
+    },
+    {
+      "seq": 41,
+      "action": "agent.run",
+      "actor_type": "agent",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:58.665119",
+      "prev_hash": "574a54d77d79431ba25edfb5c6786f13809ce9f611da407ce173a5afd2004ab2",
+      "hash": "c11cd93fdb761be07f1534033e3a6529932941b008b5d386c1f9f658113a3fb3"
+    },
+    {
+      "seq": 42,
+      "action": "auth.login",
+      "actor_type": "insurer_handler",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:58.770595",
+      "prev_hash": "c11cd93fdb761be07f1534033e3a6529932941b008b5d386c1f9f658113a3fb3",
+      "hash": "5a6c01665db455c999315406d67881113e8219be66c704729f0bb6804fcbaac3"
+    },
+    {
+      "seq": 43,
+      "action": "agent.run",
+      "actor_type": "agent",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:58.804081",
+      "prev_hash": "5a6c01665db455c999315406d67881113e8219be66c704729f0bb6804fcbaac3",
+      "hash": "481668f35fb61a65a772d470e8b61d1345cf2d7f7b343dbc36705699d5f9707f"
+    },
+    {
+      "seq": 44,
+      "action": "gap_analysis.run",
+      "actor_type": "agent",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:58.847782",
+      "prev_hash": "481668f35fb61a65a772d470e8b61d1345cf2d7f7b343dbc36705699d5f9707f",
+      "hash": "fe196d5c8b436bcd07773090433e2b4479aad60624f9657aa8e9b65932f5dec8"
+    },
+    {
+      "seq": 45,
+      "action": "agent.run",
+      "actor_type": "agent",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:58.850869",
+      "prev_hash": "fe196d5c8b436bcd07773090433e2b4479aad60624f9657aa8e9b65932f5dec8",
+      "hash": "82c90b4ecfbf757153c679aecae39bb475a06009490b33710a6f8d5fb2ae3fa1"
+    },
+    {
+      "seq": 46,
+      "action": "claim.create_draft",
+      "actor_type": "agent",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:58.893394",
+      "prev_hash": "82c90b4ecfbf757153c679aecae39bb475a06009490b33710a6f8d5fb2ae3fa1",
+      "hash": "372ae0ae04f2de55ce3f56fe09d7c18a9c778209540c7e865a68edc7dbb3b364"
+    },
+    {
+      "seq": 47,
+      "action": "agent.run",
+      "actor_type": "agent",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:58.895869",
+      "prev_hash": "372ae0ae04f2de55ce3f56fe09d7c18a9c778209540c7e865a68edc7dbb3b364",
+      "hash": "c21e7137f2f59123b78dab0e0d4df3fb8cf045a372db82b610ea124acae62842"
+    },
+    {
+      "seq": 48,
+      "action": "gap_analysis.run",
+      "actor_type": "customer",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:58.968347",
+      "prev_hash": "c21e7137f2f59123b78dab0e0d4df3fb8cf045a372db82b610ea124acae62842",
+      "hash": "6a79e4ca2986daac0e4270e46a3366c3ff3851e60c9b894292dd37b07ce1f0dd"
+    },
+    {
+      "seq": 49,
+      "action": "finding.review_requested",
+      "actor_type": "customer",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:59.001975",
+      "prev_hash": "6a79e4ca2986daac0e4270e46a3366c3ff3851e60c9b894292dd37b07ce1f0dd",
+      "hash": "984068afa7c3e59af47dba1a0f3f8d82b299b0c0a747d368e77ee36280a1ac0e"
+    },
+    {
+      "seq": 50,
+      "action": "consent.changed",
+      "actor_type": "customer",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:59.037652",
+      "prev_hash": "984068afa7c3e59af47dba1a0f3f8d82b299b0c0a747d368e77ee36280a1ac0e",
+      "hash": "c0da357c0a0dde320396e3c659c55af38d64957a3b7a002b0ced0080889c6bea"
+    },
+    {
+      "seq": 51,
+      "action": "auth.login",
+      "actor_type": "bank_admin",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:59.135104",
+      "prev_hash": "c0da357c0a0dde320396e3c659c55af38d64957a3b7a002b0ced0080889c6bea",
+      "hash": "884b56a770a0b05357cd5c62b72a77b64bd41060e97fb1dd889f8d50a63cc741"
+    },
+    {
+      "seq": 52,
+      "action": "bank.analytics_viewed",
+      "actor_type": "bank_admin",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:59.159910",
+      "prev_hash": "884b56a770a0b05357cd5c62b72a77b64bd41060e97fb1dd889f8d50a63cc741",
+      "hash": "66e976e4b70c9ea54cc65d9290a90cb2dda3863f5bbbf7698ac99da6cb5b9959"
+    },
+    {
+      "seq": 53,
+      "action": "bank.integration_viewed",
+      "actor_type": "bank_admin",
+      "outcome": "success",
+      "created_at": "2026-10-19T23:07:59.172355",
+      "prev_hash": "66e976e4b70c9ea54cc65d9290a90cb2dda3863f5bbbf7698ac99da6cb5b9959",
+      "hash": "bb1d04bc41e024afe826c807a1de38914574db20bfb7552cdf50974da52b535a"
     }
   ]
 }

@@ -2,7 +2,7 @@
 
 ## 1. Automated tests (`backend/tests`, `make test`)
 
-64 tests run offline in about eight seconds against a fresh seeded database.
+105 tests run offline in about twenty seconds against a fresh seeded database.
 
 | File | What it covers |
 |---|---|
@@ -11,6 +11,9 @@
 | `test_claim_journey.py` | The full journey (register → profile → upload wording → cited answer from the upload → gap analysis → incident via chat → checklist → missing items → evidence → approval → mock submission → tracking → insurer queue → assign → request information → customer response with approval → copilot summary → human decision → dashboard → dispute explanation and review draft); duplicate submission prevention; adapter failure and retry; assisted pack PDF |
 | `test_agent.py` | Cited answers, refusal on unsupported questions, geographic contradictions, not selected extensions, gap tool path, Tier 2 never acts without approval, prompt injection in uploads is neutralised, insurer surface cannot use customer tools, Chinese flows, grounded and cautious dispute flow, operation log and run transparency, run scoping |
 | `test_provider_loop.py` | The Claude API path with a stubbed client: tool calls round trip, tool results returned as parseable `tool_result` blocks, unverified citations flagged, human only and unknown tools denied, caution banner on uncited coverage claims, fallback to the offline provider on API failure, Tier 2 tools are approval gated |
+| `test_coverage_intelligence.py` | Fact extraction (deadlines, waiting periods, `not_found` on silence, conflicts only across clauses, effective periods); calculator determinism, traces and refusal to guess; prioritisation separates priority from confidence; verification rejects unknown clauses and qualifies uncited exclusions; the deterministic pipeline for Alex (bicycle partial with illustrative figures), pending policies excluded and reported; the judge rejects an invented clause; B's assessment is independent of A and the evidence package is minimal; model failure falls back and is labelled; the OpenAI compatible client parses fenced JSON, strips think blocks, retries on validation errors and raises on persistent failure; the API job, graph node detail and review request; background jobs poll to completion |
+| `test_integrity.py` | Each checker on a concrete case (future date fails validation and blocks; outside period is for a person; amount arithmetic; duplicate invoice across claims requires review; image without text is inconclusive; cross document mismatch surfaced; injection is a warning not an invalidation; a crashing checker is inconclusive); explicit aggregation order; warnings proceed to submission and escalate to the handler; tampering signals do not claim authenticity; checks rerun only when inputs change; the approval is bound to the integrity inputs |
+| `test_bank_and_security.py` | Bank aggregates contain no identifiable data and no customer route; consent changes the counted base and locked purposes stay; external model processing is consent gated; record sharing is explicit and revocable, household accounts see only shares; session list and revocation; password change revokes other sessions; lockout; password reset without enumeration and single use; TOTP enrolment, challenge and verification; MFA enforcement for privileged roles; CSP header; feedback on own messages only; mock adapters are labelled |
 
 ## 2. Behavioural evaluation suite (`backend/evals`, `make evals`)
 
@@ -37,6 +40,9 @@
 
 Result for the deterministic provider: **22/22** (`backend/evals/results-deterministic.json`). Run `python -m evals.run_evals --provider anthropic` with an API key to score the model driven path; expectations are written so that both can be compared.
 
+### Screenshots and layout checks
+`scripts/screenshots.mjs`, `scripts/screens_gaps.mjs` and `scripts/screens_bank.mjs` drive the built app with Playwright at 1280 px and 390 px, assert that no page scrolls horizontally, watch the console for errors and capture `evidence/screens/*.png` (login, overview in both languages, analysis workspace with stages, finding cards and graph, claim case, insurer dashboard and workspace, bank overview, integration and audit, settings with consent and security, the MFA challenge). The bank script also enrols a staff account in TOTP through the API and completes a login through the challenge.
+
 ## 3. Execution evidence (`make evidence`)
 
 `scripts/generate_evidence.py` plays a 27 step customer and insurer journey and writes `evidence/`: operation logs for every agent run, the journey record with tools and tiers, the audit chain verification and the evaluation results. Three steps are deliberate denials (insurer cannot see an unsubmitted claim, approval replay, other tenant).
@@ -48,4 +54,4 @@ Result for the deterministic provider: **22/22** (`backend/evals/results-determi
 * The dashboard's amounts are separate; every tile has a definition on hover.
 
 ## 5. Limits of this evaluation
-The behavioural suite verifies grounding against the retrieved set and the structure of behaviour; it cannot judge the quality of the model's prose. For the API path, human review of a sample of runs is still required, and the `results-anthropic.json` file should be included with any claim about model quality.
+The behavioural suite verifies grounding against the retrieved set and the structure of behaviour; it cannot judge the quality of the model's prose. For the API path, human review of a sample of runs is still required, and the `results-anthropic.json` file should be included with any claim about model quality. The coverage pipeline has been evaluated in deterministic mode only; the open-weight model roles are exercised with a fake server in the unit tests and have not been run end to end on GPU hardware from this repository. Integrity checkers are tested on constructed cases, not on a labelled corpus of real claims, so no precision or recall figure is claimed.

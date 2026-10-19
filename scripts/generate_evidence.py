@@ -145,6 +145,36 @@ def main() -> int:
         liwen.chat("25 中文 policy question (exclusion identified)", "充电起火算不算？")
         liwen.chat("26 中文 gap analysis", "分析我的保障缺口")
         liwen.chat("27 中文 incident -> claim draft", "我的电动车昨晚在楼下被偷了，已经报警")
+        # coverage intelligence pipeline, run synchronously so the job record is complete
+        r = alex.c.post("/api/gaps/analyze", json={"sync": True}, headers=alex.h)
+        ga = r.json()["analysis"]
+        job = r.json().get("job") or {}
+        stage_note = ", ".join(f"{st['key']}:{st['status']}" for st in (job.get("stages") or ga.get("stages") or []))
+        record("28 coverage analysis: nine stages, typed facts, A/B/C roles, verification, calculator", alex.name, "POST", "/api/gaps/analyze", r, f"mode={ga.get('summary', {}).get('mode')} pipeline={ga.get('summary', {}).get('pipeline_version')} counts={json.dumps(ga.get('summary', {}).get('counts'))} stages=[{stage_note}]")
+        findings = ga.get("findings", [])
+        if findings:
+            f0 = max(findings, key=lambda f: (f.get("priority_score") or 0))
+            steps[-1]["top_finding"] = {k: f0.get(k) for k in ("key", "need", "status", "risk_priority", "evidence_confidence", "priority_rationale", "verification", "calculation") if k in f0}
+            r = alex.c.post(f"/api/gaps/findings/{f0['id']}/review", json={"reason": "Please check this one with a person"}, headers=alex.h)
+            record("29 customer asks for a human review of a finding", alex.name, "POST", f"/api/gaps/findings/{f0['id']}/review", r)
+        r = alex.c.get("/api/gaps/facts")
+        facts = r.json().get("facts", [])
+        record("30 typed policy facts with explicit states (nothing guessed)", alex.name, "GET", "/api/gaps/facts", r, json.dumps({st: sum(1 for f in facts if f.get("status") == st) for st in ("known", "unknown", "not_found", "ambiguous", "conflicting")}))
+        # integrity checks on the submitted claim, insurer audience
+        r = jordan.c.get(f"/api/insurer/claims/{claim_id}")
+        checks = r.json().get("checks") or {}
+        record("31 integrity ensemble on the claim (insurer audience)", jordan.name, "GET", f"/api/insurer/claims/{claim_id}", r, f"overall={checks.get('overall_status')} checkers={[(c['checker_id'], c['status']) for c in checks.get('checkers', [])]}")
+        # consent and the bank's aggregates
+        r = alex.c.post("/api/consents", json={"purpose": "analytics_aggregate", "granted": False}, headers=alex.h)
+        record("32 customer withdraws aggregate analytics consent (append only record)", alex.name, "POST", "/api/consents", r)
+        dana = S("dana.whitfield@harbourline.example", "dana-demo-2026")
+        r = dana.c.get("/api/bank/overview")
+        m = r.json().get("metrics", {})
+        record("33 bank administrator sees aggregates only (consent respected, small cells suppressed)", dana.name, "GET", "/api/bank/overview", r, json.dumps({k: m[k].get("value") for k in ("customers_total", "customers_counted", "coverage_analysis_completion", "potential_gaps_identified", "finding_verification_rate") if k in m}))
+        r = dana.c.get(f"/api/insurer/claims/{claim_id}")
+        record("34 bank administrator cannot read a claim", dana.name, "GET", f"/api/insurer/claims/{claim_id}", r, "expected 403")
+        r = dana.c.get("/api/bank/integration")
+        record("35 integration health: eight interfaces, all labelled mock", dana.name, "GET", "/api/bank/integration", r, json.dumps([(i["interface"], i["mode"]) for i in r.json().get("interfaces", [])]))
         # collect
         for f in (tmp / "logs").rglob("*.jsonl"):
             if f.name != "index.jsonl":
@@ -168,10 +198,11 @@ def main() -> int:
 
 Generated {datetime.now(timezone.utc).isoformat()} with provider `{provider}` against a fresh seeded database.
 
-- `journey.json` — 27 steps of a complete customer and insurer journey (requests, statuses, assistant excerpts, tools called with permission tiers, approvals). Steps 9, 11 and 24 are expected denials.
+- `journey.json` — 35 steps of a complete customer, insurer and bank journey (requests, statuses, assistant excerpts, tools called with permission tiers, approvals, the nine stage coverage analysis with its mode and stage status, typed fact states, a human review request, integrity checker results, a consent change and the bank's aggregate view). Steps 9, 11, 24 and 34 are expected denials.
 - `operation-logs/` — one JSON Lines file per agent run: run_started, intent_classified, tool_call (tool, tier, status, masked input, output summary, duration), grounding_verified, run_finished. `index.jsonl` lists all runs. Personal data is masked before writing.
 - `audit-chain.json` — verification of the hash chained audit log after the run, plus the last 40 events.
 - `eval-results.json` — evaluation suite results (`backend/evals/cases.json`), if the suite was run for this provider.
+- `screens/` — Playwright captures at 1280 px and 390 px (`scripts/screenshots.mjs`, `screens_gaps.mjs`, `screens_bank.mjs`); every page was checked for horizontal overflow and console errors when captured. Not regenerated by this script; run the three scripts against a running server.
 
 Regenerate with `make evidence` (offline) or `LLM_PROVIDER=anthropic ANTHROPIC_API_KEY=... make evidence`.
 """, encoding="utf-8")

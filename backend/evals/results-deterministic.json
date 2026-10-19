@@ -1,6 +1,6 @@
 {
   "provider": "deterministic",
-  "ran_at": "2026-10-19T22:06:27.183820+00:00",
+  "ran_at": "2026-10-19T23:07:05.748537+00:00",
   "total": 22,
   "passed": 22,
   "pass_rate": 1.0,
@@ -255,7 +255,7 @@
         "unverified": [],
         "caution_banner": false
       },
-      "answer_excerpt": "I'm sorry about this. I have opened claim **CLM-2026-100477** against **Northgate Mutual HomeSure Buildings & Contents** (NGM-HC-204481) with what you told me; nothing has been sent to the insurer.\n\n**Coverage reading:** Northgate Mutual HomeSure Buildings & Contents (NGM-HC-204481) appears to include this type of cover under [NGM-HC-204481 §2.6], [NGM-HC-204481 §2.7], [NGM-HC-204481 §2.2], subjec"
+      "answer_excerpt": "I'm sorry about this. I have opened claim **CLM-2026-100714** against **Northgate Mutual HomeSure Buildings & Contents** (NGM-HC-204481) with what you told me; nothing has been sent to the insurer.\n\n**Coverage reading:** Northgate Mutual HomeSure Buildings & Contents (NGM-HC-204481) appears to include this type of cover under [NGM-HC-204481 §2.6], [NGM-HC-204481 §2.7], [NGM-HC-204481 §2.2], subjec"
     },
     {
       "id": "claim-status",
@@ -279,7 +279,7 @@
         "unverified": [],
         "caution_banner": false
       },
-      "answer_excerpt": "**CLM-2026-100477** (Northgate Mutual HomeSure Buildings & Contents): last known status **Information required**, recorded by platform at 2026-10-19 22:06.\n\nIt has not been submitted yet (progress 50%). Still missing: photos, proof_of_ownership, police_report, location.\n\n**Recent activity:**\n- 2026-10-19 · Claim draft created\n- 2026-10-19 · Checklist has outstanding required items"
+      "answer_excerpt": "**CLM-2026-100714** (Northgate Mutual HomeSure Buildings & Contents): last known status **Information required**, recorded by platform at 2026-10-19 23:07.\n\nIt has not been submitted yet (progress 50%). Still missing: photos, proof_of_ownership, police_report, location.\n\n**Recent activity:**\n- 2026-10-19 · Claim draft created\n- 2026-10-19 · Checklist has outstanding required items"
     },
     {
       "id": "draft-update",
@@ -303,7 +303,7 @@
         "unverified": [],
         "caution_banner": false
       },
-      "answer_excerpt": "Here is a draft for claim CLM-2026-100477. Facts come from your records; anything in [square brackets] is for you to fill in because I do not have it.\n\n**Subject:** Progress update request — CLM-2026-100477\n\n> Dear Northgate Mutual claims team,\n> \n> Claim reference: CLM-2026-100477\n> Policy number: NGM-HC-204481\n> \n> I submitted this claim on [submission date]. Could you let me know its current st"
+      "answer_excerpt": "Here is a draft for claim CLM-2026-100714. Facts come from your records; anything in [square brackets] is for you to fill in because I do not have it.\n\n**Subject:** Progress update request — CLM-2026-100714\n\n> Dear Northgate Mutual claims team,\n> \n> Claim reference: CLM-2026-100714\n> Policy number: NGM-HC-204481\n> \n> I submitted this claim on [submission date]. Could you let me know its current st"
     },
     {
       "id": "submit-not-ready",
@@ -445,7 +445,7 @@
         "unverified": [],
         "caution_banner": false
       },
-      "answer_excerpt": "很遗憾发生这样的事。我已根据你的描述在 **鹏城安保 电动自行车综合保险**（PCAB-EB-2026-10377）下建立了理赔 **CLM-2026-100476**，尚未发送给保险公司。\n\n**保障解读：**鹏城安保电动自行车综合保险（PCAB-EB-2026-10377）在 [PCAB-EB-2026-10377 §3]、[PCAB-EB-2026-10377 §5]、[PCAB-EB-2026-10377 §2] 项下看起来包含此类保障，以条款、限额和除外责任为准。通常会扣除 200 CNY 的免赔额（[PCAB-EB-2026-10377 §10]）。\n**需注意的条件：**[PCAB-EB-2026-10377 §9] 索赔程序与所需材料\n\n**提交前还需要：**\n- 损失或现场的照片或视频 [PCAB-EB-2026-10377 §9] — 照片便于保险公司及时评估损失并佐证"
+      "answer_excerpt": "很遗憾发生这样的事。我已根据你的描述在 **鹏城安保 电动自行车综合保险**（PCAB-EB-2026-10377）下建立了理赔 **CLM-2026-100666**，尚未发送给保险公司。\n\n**保障解读：**鹏城安保电动自行车综合保险（PCAB-EB-2026-10377）在 [PCAB-EB-2026-10377 §3]、[PCAB-EB-2026-10377 §5]、[PCAB-EB-2026-10377 §2] 项下看起来包含此类保障，以条款、限额和除外责任为准。通常会扣除 200 CNY 的免赔额（[PCAB-EB-2026-10377 §10]）。\n**需注意的条件：**[PCAB-EB-2026-10377 §9] 索赔程序与所需材料\n\n**提交前还需要：**\n- 损失或现场的照片或视频 [PCAB-EB-2026-10377 §9] — 照片便于保险公司及时评估损失并佐证"
     },
     {
       "id": "zh-cross-lingual",

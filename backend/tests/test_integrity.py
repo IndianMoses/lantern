@@ -195,3 +195,32 @@ def test_checks_rerun_only_when_inputs_change(alex, db):
     _upload(alex, cid, "photo.png", PNG + b"\x00" * 64, "image/png", "photo", "photos")
     n_after = len(db.execute(select(ClaimCheckResult).where(ClaimCheckResult.claim_id == cid)).scalars().all())
     assert n_after == n_before + 1
+
+
+def test_submission_approval_is_bound_to_integrity_inputs(alex, db):
+    """The approval card is computed over the integrity inputs; new evidence after the card invalidates it."""
+    cid = _new_claim(alex, items_involved=[{"label": "Road bike", "value": 1200}], estimated_loss=1200)
+    _upload(alex, cid, "report.txt", b"Police report WM/2026/0001234 theft of pedal cycle", "text/plain", "police_report", "police_report")
+    _upload(alex, cid, "receipt.txt", b"Receipt road bike total GBP 1,200.00", "text/plain", "receipt", "proof_of_ownership")
+    _upload(alex, cid, "photo.png", PNG + b"\x00" * 64, "image/png", "photo", "photos")
+    r = alex.post(f"/api/claims/{cid}/submit")
+    assert r.status_code == 200, r.text
+    approval = r.json()["approval"]
+    claim = db.get(Claim, cid)
+    latest = integrity.run(db, claim)
+    assert approval["payload"]["integrity_inputs_hash"] == latest.inputs_hash
+    # a document added after the card changes the integrity inputs, so the stale card must not execute
+    _upload(alex, cid, "photo2.png", PNG + b"\x01" * 64, "image/png", "photo", "photos")
+    r = alex.post(f"/api/approvals/{approval['id']}/approve", json={"token": approval["token"]})
+    assert r.status_code == 200
+    out = r.json()["approval"]
+    assert out["status"] == "failed" and "changed" in out["result"]["error"]
+    # nothing was sent: the claim went back to review and no submission exists
+    detail = alex.get(f"/api/claims/{cid}").json()
+    assert detail["claim"]["status"] == "ready_for_review"
+    assert not detail["claim"].get("insurer_reference")
+    # a fresh card carries the new hash and can be approved
+    r = alex.post(f"/api/claims/{cid}/submit")
+    assert r.status_code == 200, r.text
+    fresh = r.json()["approval"]
+    assert fresh["payload"]["integrity_inputs_hash"] != approval["payload"]["integrity_inputs_hash"]

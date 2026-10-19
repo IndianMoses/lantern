@@ -3,7 +3,8 @@
 Interactive OpenAPI documentation is served at `/api/docs` (Swagger UI) and `/api/redoc` while the backend is running; the schema is at `/api/openapi.json`.
 
 ## Conventions
-* JSON over HTTPS; cookie session set by `POST /api/auth/login`; every non GET request needs the header `X-CSRF-Token` with the value returned by `/api/auth/me`.
+* JSON over HTTPS; cookie session set by `POST /api/auth/login` (or `POST /api/auth/mfa/verify` when the account has MFA); every non GET request needs the header `X-CSRF-Token` with the value returned by `/api/auth/me`.
+* Language: send `X-Lang: en` or `X-Lang: zh` on every request; the server localises every label it generates for that request (the signed in user's stored locale is the fallback).
 * Errors are `{ "detail": "..." }` with 400 (validation or state), 401 (not signed in), 403 (wrong role or missing CSRF), 404 (not found or not yours), 409 (conflict), 429 (rate limited).
 * All timestamps are ISO 8601 UTC. Money is `{amount, currency}` on the record it belongs to.
 * Demo data is marked `is_demo_data` on policies, claims and documents.
@@ -12,7 +13,13 @@ Interactive OpenAPI documentation is served at `/api/docs` (Swagger UI) and `/ap
 
 | Method and path | Purpose |
 |---|---|
-| `POST /api/auth/register` · `POST /api/auth/login` · `POST /api/auth/logout` · `GET /api/auth/me` · `PATCH /api/auth/me` | Accounts and sessions |
+| `POST /api/auth/register` · `POST /api/auth/login` · `POST /api/auth/logout` · `GET /api/auth/me` · `PATCH /api/auth/me` | Accounts and sessions. Login returns `{mfa_required: true, challenge_token}` for MFA accounts (423 when the account is locked) |
+| `POST /api/auth/mfa/verify` (`{challenge_token, code}`) · `POST /api/auth/mfa/setup` · `POST /api/auth/mfa/enable` (`{code}`) · `POST /api/auth/mfa/disable` (`{code}`) | TOTP multi factor authentication (any role) |
+| `GET /api/auth/sessions` · `POST /api/auth/sessions/revoke` (`{all_others: true}` or `{session_id}`) · `POST /api/auth/change-password` | Session management; a password change revokes every other session |
+| `POST /api/auth/reset/request` (`{email}`) · `POST /api/auth/reset/confirm` (`{token, new_password}`) | Password reset; the request always answers the same way |
+| `GET /api/consents` · `POST /api/consents` (`{purpose, granted}`) | Consent purposes (locked ones cannot be withdrawn through this endpoint) |
+| `GET /api/shares` · `POST /api/shares` (`{grantee_email, record_type: policy|claim, record_id, permissions?}`) · `DELETE /api/shares/{id}` | Explicit per record sharing with household members and advisers |
+| `POST /api/feedback` (`{message_id, rating: 1|-1}`) | Rate an assistant answer (own messages only) |
 | `GET/PUT /api/profile` | Onboarding profile (assets, housing, activities, household, preferences, consents) |
 | `GET /api/overview` | Dashboard: metrics, portfolio cards, action centre, insights, recent claims |
 | `GET /api/notifications` · `POST /api/notifications/{id}/read` · `POST /api/notifications/read-all` | In app notifications |
@@ -20,8 +27,10 @@ Interactive OpenAPI documentation is served at `/api/docs` (Swagger UI) and `/ap
 | `POST /api/policies/upload` (multipart) | Upload a wording → extraction, segmentation, injection scan, pending policy |
 | `PATCH /api/policies/{id}/clauses/{clause_id}` | Correct an extracted clause |
 | `GET /api/policies/insurers` · `GET /api/policies/insurance-types` | Reference data |
-| `POST /api/gaps/analyze` · `GET /api/gaps/latest` | Coverage gap analysis |
-| `GET /api/claims` · `POST /api/claims` · `GET /api/claims/{id}` · `PATCH /api/claims/{id}` · `POST /api/claims/{id}/refresh` | Claims and drafts |
+| `POST /api/gaps/analyze` (`{sync?: true}`) · `GET /api/gaps/jobs/{job_id}` · `GET /api/gaps/latest` · `GET /api/gaps/{analysis_id}` · `GET /api/gaps/history` | Coverage analysis: start a job (background by default, poll the job for the nine stage status), read a report with findings, verification, calculations, prioritisation and the graph |
+| `GET /api/gaps/{analysis_id}/graph/{node_key}` · `GET /api/gaps/facts?policy_id=` | Graph node detail with provenance; typed policy facts with their status and clause |
+| `POST /api/gaps/findings/{finding_id}/review` · `GET /api/gaps/reviews/open` | Ask for a human review of a finding; list open requests |
+| `GET /api/claims` · `POST /api/claims` · `GET /api/claims/{id}` · `PATCH /api/claims/{id}` · `POST /api/claims/{id}/refresh` | Claims and drafts; the detail carries `checks` (integrity results for the customer audience) |
 | `GET /api/claims/incident-types?insurance_type=` · `GET /api/claims/questions?insurance_type=&incident_type=` · `POST /api/claims/rank-policies` | Wizard support |
 | `POST /api/claims/{id}/submit` | Prepare the submission approval (returns the approval card with its token) |
 | `GET /api/claims/{id}/pack` · `POST /api/claims/{id}/pack/pdf` | Claim pack preview (JSON) and PDF for assisted submission |
@@ -57,6 +66,17 @@ The assistant message carries `blocks` the interface renders: `citations`, `chec
 | `GET /api/insurer/customers` · `GET /api/insurer/customers/{id}` · `GET /api/insurer/policies` · `GET /api/insurer/team` | Directory |
 | `GET /api/insurer/audit` (admin) | Scoped audit events and hash chain verification |
 
+Privileged staff endpoints return 403 with `mfa_required` when `MFA_REQUIRED_FOR_PRIVILEGED=true` and the session did not pass MFA.
+
+## Bank endpoints (bank administrators)
+
+| Method and path | Purpose |
+|---|---|
+| `GET /api/bank/overview` | Aggregate metrics with definitions over the bank's consenting customers; cells under the k anonymity threshold are `null` |
+| `GET /api/bank/integration` | The eight interfaces with mode (`mock` until a real adapter is registered), call counts, consent aggregates, data boundary |
+| `GET /api/bank/audit?limit=` | The bank staff's own access trail plus integration events, with chain verification |
+| `GET /api/bank/customers/{id}` | Always 403: bank staff have no access to identifiable customer records |
+
 ## Development endpoints (not mounted in production)
 `GET /api/dev/demo-accounts`, `POST /api/dev/reset-demo`, `GET /api/dev/audit-chain`, `GET /api/health`.
 
@@ -75,8 +95,14 @@ class InsurerAdapter(Protocol):
 
 `MockInsurerAdapter` is idempotent on the key, returns `is_mock=True`, rejects packs missing required fields and raises `AdapterError` when the description contains `SIMULATE_ADAPTER_FAILURE`. To add a real provider: implement the protocol, add authentication and timeouts, keep the idempotency key, and select it per organisation in `get_adapter()` using `Organization.integration_mode`. Record `ProviderWebhookEvents` from signed webhooks to move claims to `acknowledged` or decided statuses with `status_source="adapter"`.
 
-### Model provider
-`backend/app/agent/providers/base.py`: `complete(system, messages, tools, max_tokens, context) -> ProviderTurn`. Messages use Anthropic style content blocks. Add a provider by implementing this method; tools and tiers are unaffected.
+### Model provider (assistant)
+`backend/app/agent/providers/base.py`: `complete(system, messages, tools, max_tokens, context) -> ProviderTurn`. Messages use Anthropic style content blocks. Add a provider by implementing this method; tools and tiers are unaffected. The runner only uses a hosted provider when the customer's `external_model_processing` consent is granted.
+
+### Analysis roles (coverage pipeline)
+`backend/app/agent/analysts.py`: three contracts, `analyze(package) -> AnalystOutput` (roles A and B), `challenge(package, a_output, own_output) -> ChallengeOutput` (B) and `adjudicate(package, a, b, challenge, verification) -> JudgeOutput` (C). `RuleBasedAnalyst` implements all three offline; `OpenAICompatibleAnalyst` calls any `/v1/chat/completions` endpoint with JSON mode, validates the response against the Pydantic schema, retries once with the validation error, and raises `ProviderError` so the pipeline can fall back and label the job. Models and endpoints come from `MODEL_{A,B,C}_URL` and `MODEL_{A,B,C}_NAME` (`docs/MODELS.md`).
+
+### Bank adapters
+`backend/app/services/bank.py`: eight `Protocol`s (`IdentityProvider`, `CustomerProfileSource`, `ConsentManager`, `DocumentSource`, `CommunicationsChannel`, `AuditSink`, `AnalyticsSink`, `EmbeddingContext`). Register a bank's implementation in `adapters_for(org)`; until then `MockAdapters` answers with `mock=True`. See `docs/BANK_INTEGRATION.md` for the data boundary of each interface.
 
 ### Document processing
 `services/extraction.py`: `extract_text(mime, bytes)` is the place to add OCR; `segment_clauses(text)` and `classify_kind()` can be replaced by a model based extractor as long as they return the same clause dictionaries.

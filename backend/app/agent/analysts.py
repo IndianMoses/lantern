@@ -457,7 +457,9 @@ Return only the JSON object."""
 
 
 def _extract_json(text: str) -> dict:
-    text = text.strip()
+    # hybrid reasoning models (Qwen3, GLM-4.5) may emit a <think> block even
+    # when asked not to; it is never part of the answer
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.S).strip()
     if text.startswith("```"):
         text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text, flags=re.S)
     start = text.find("{")
@@ -493,7 +495,9 @@ class OpenAICompatibleAnalyst:
         for attempt in range(self.max_retries + 1):
             try:
                 with httpx.Client(timeout=self.timeout) as client:
-                    r = client.post(f"{self.base_url}/chat/completions", headers=headers, json={"model": self.model_id, "messages": messages, "temperature": self.temperature, "max_tokens": self.max_tokens, "response_format": {"type": "json_object"}})
+                    # chat_template_kwargs turns off the thinking mode of Qwen3 and
+                    # GLM-4.5 on vLLM and SGLang (ignored by servers that do not know it)
+                    r = client.post(f"{self.base_url}/chat/completions", headers=headers, json={"model": self.model_id, "messages": messages, "temperature": self.temperature, "max_tokens": self.max_tokens, "response_format": {"type": "json_object"}, "chat_template_kwargs": {"enable_thinking": False}})
                 r.raise_for_status()
                 body = r.json()
                 content = body["choices"][0]["message"]["content"]

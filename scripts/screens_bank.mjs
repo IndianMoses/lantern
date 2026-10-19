@@ -8,11 +8,19 @@ const out = process.argv[3] || "evidence/screens";
 mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || undefined });
 async function login(page, email, password) {
-  await page.goto(`${base}/login`);
-  await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', password);
-  await page.click('button[type="submit"]');
-  await page.waitForURL((u) => !u.pathname.endsWith("/login"));
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await page.goto(`${base}/login`);
+    await page.fill('input[type="email"]', email);
+    await page.fill('input[type="password"]', password);
+    const [resp] = await Promise.all([page.waitForResponse((r) => r.url().endsWith("/api/auth/login")), page.click('button[type="submit"]')]);
+    if (resp.status() === 429) { console.log("login rate limited, waiting 20s"); await page.waitForTimeout(20000); continue; }
+    if (resp.status() !== 200) throw new Error(`login ${email} failed: ${resp.status()} ${await resp.text()}`);
+    const body = await resp.json();
+    if (body.mfa_required) return body;
+    await page.waitForURL((u) => !u.pathname.endsWith("/login"));
+    return body;
+  }
+  throw new Error("login kept being rate limited");
 }
 const shots = [];
 async function shot(page, name) {
@@ -56,22 +64,31 @@ try {
   // MFA login step: enrol Morgan through the API, then show the challenge screen.
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await ctx.newPage();
-  await login(page, "morgan.clarke@northgate.example", "morgan-demo-2026");
+  // pick a staff account that is not yet enrolled (a previous run against the same database may have enrolled one)
+  const candidates = [["morgan.clarke@northgate.example", "morgan-demo-2026"], ["nia.williams@pawfield.example", "nia-demo-2026"], ["jordan.reyes@northgate.example", "jordan-demo-2026"]];
+  let staff = null;
+  for (const [email, password] of candidates) {
+    const body = await login(page, email, password);
+    if (!body.mfa_required) { staff = { email, password }; break; }
+  }
+  if (!staff) throw new Error("every candidate staff account already has MFA enabled; restart with a fresh database");
   const setup = await page.evaluate(async () => {
     const me = await (await fetch("/api/auth/me")).json();
     const r = await fetch("/api/auth/mfa/setup", { method: "POST", headers: { "X-CSRF-Token": me.csrf_token } });
-    return r.json();
+    return { status: r.status, ...(await r.json()) };
   });
+  if (setup.status !== 200) throw new Error(`mfa setup failed: ${JSON.stringify(setup)}`);
   const code = await totp(setup.secret);
-  await page.evaluate(async (code) => {
+  const enabled = await page.evaluate(async (code) => {
     const me = await (await fetch("/api/auth/me")).json();
-    await fetch("/api/auth/mfa/enable", { method: "POST", headers: { "X-CSRF-Token": me.csrf_token, "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
+    const r = await fetch("/api/auth/mfa/enable", { method: "POST", headers: { "X-CSRF-Token": me.csrf_token, "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
+    const out = { status: r.status, body: await r.text() };
     await fetch("/api/auth/logout", { method: "POST", headers: { "X-CSRF-Token": me.csrf_token } });
+    return out;
   }, code);
-  await page.goto(`${base}/login`);
-  await page.fill('input[type="email"]', "morgan.clarke@northgate.example");
-  await page.fill('input[type="password"]', "morgan-demo-2026");
-  await page.click('button[type="submit"]');
+  if (enabled.status !== 200) throw new Error(`mfa enable failed: ${JSON.stringify(enabled)}`);
+  const challenge = await login(page, staff.email, staff.password);
+  if (!challenge.mfa_required) throw new Error("expected an MFA challenge after enrolment");
   await page.waitForSelector('input[autocomplete="one-time-code"]');
   await shot(page, "desktop-login-mfa-challenge");
   await page.fill('input[autocomplete="one-time-code"]', await totp(setup.secret));
