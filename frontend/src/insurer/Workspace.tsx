@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Checklist, CompletenessPanel, CoverageViewPanel, MessageBlocks, type ChecklistItem, type Completeness, type CoverageView } from "../components/Blocks";
+import { Checklist, ChecksPanel, CompletenessPanel, CoverageViewPanel, MessageBlocks, type ChecklistItem, type Checks, type Completeness, type CoverageView } from "../components/Blocks";
 import { Icon } from "../components/Icons";
 import { InsurerShell } from "../components/Layout";
 import { CitationChip, CitationProvider, Markdown, type ClauseRef } from "../components/Markdown";
@@ -30,6 +30,7 @@ interface Workspace {
   audit: { seq: number; action: string; actor_type: string; outcome: string; created_at: string; hash: string }[];
   allowed_statuses: string[];
   can_decide: boolean;
+  checks: Checks | null;
 }
 
 export default function WorkspacePage() {
@@ -123,6 +124,7 @@ export default function WorkspacePage() {
                 )}
                 <div className="card"><div className="row between" style={{ marginBottom: 6 }}><Badge plain>source: platform rules</Badge><span className="small muted">{w.coverage_reading.label}</span></div><CoverageViewPanel v={w.coverage_reading} /></div>
                 <div className="card"><Badge plain>source: platform rules</Badge><div style={{ marginTop: 8 }}><CompletenessPanel c={w.completeness} /></div><div style={{ marginTop: 12 }}><Checklist items={w.checklist} compact /></div></div>
+                <div className="card"><Badge plain>source: automated checks</Badge><div style={{ marginTop: 8 }}><ChecksPanel checks={w.checks} audience="insurer" /></div></div>
                 {w.decisions.length > 0 && (
                   <div className="card">
                     <h3>{lang === "zh" ? "结论记录" : "Decisions"}</h3>

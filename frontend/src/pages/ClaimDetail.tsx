@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ApprovalCard, Checklist, CompletenessPanel, CoverageViewPanel, DraftCard, type Approval, type ChecklistItem, type Completeness, type CoverageView } from "../components/Blocks";
+import { ApprovalCard, Checklist, ChecksPanel, CompletenessPanel, CoverageViewPanel, DraftCard, type Approval, type ChecklistItem, type Checks, type Completeness, type CoverageView } from "../components/Blocks";
 import { Icon } from "../components/Icons";
 import { CustomerShell } from "../components/Layout";
 import { CitationProvider, CitationChip, type ClauseRef } from "../components/Markdown";
@@ -25,6 +25,7 @@ interface Detail {
   submissions: { id: string; status: string; mode: string; adapter: string; error: string | null; insurer_reference: string | null; mock: boolean; created_at: string }[];
   pending_approvals: Approval[];
   timeline: { id: string; at: string; actor_type: string; event_type: string; summary: string }[];
+  checks: Checks | null;
 }
 
 export default function ClaimDetailPage() {
@@ -179,6 +180,9 @@ export default function ClaimDetailPage() {
           <div className="stack">
             <div className="card">
               <CompletenessPanel c={d.completeness} />
+            </div>
+            <div className="card">
+              <ChecksPanel checks={d.checks} audience="customer" />
             </div>
             <div className="card">
               <div className="card-head"><h3>{t("checklist")}</h3>{preSubmission && <button className="btn sm" onClick={() => setUploadFor("any")}>{t("upload")}</button>}</div>

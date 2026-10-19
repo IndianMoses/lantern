@@ -18,6 +18,7 @@ from ..services import claim_pack as pack_svc
 from ..services import claims as claim_svc
 from ..services import communications as comm_svc
 from ..services import coverage as coverage_svc
+from ..services import integrity
 from ..services import policies as pol_svc
 from ..services.taxonomy import INCIDENT_TYPES, incident_types_for, questions_for
 from .documents import doc_out
@@ -83,6 +84,7 @@ def claim_detail(db: Session, claim, user: User, lang: str | None = None) -> dic
         "submissions": [{"id": s.id, "status": s.status, "mode": s.mode, "adapter": s.adapter, "error": s.error, "insurer_reference": s.response_payload.get("insurer_reference"), "mock": bool(s.response_payload.get("mock")), "created_at": s.created_at.isoformat()} for s in subs],
         "pending_approvals": [approval_svc.serialize(a) for a in pending],
         "timeline": claim_svc.timeline(db, claim, for_customer=True),
+        "checks": integrity.to_dict(integrity.latest(db, claim), audience="customer"),
         "questions": questions_for(claim.insurance_type, claim.incident_type),
     }
 

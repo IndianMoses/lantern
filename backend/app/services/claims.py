@@ -130,6 +130,15 @@ def refresh_claim_analysis(db: Session, claim: Claim) -> Claim:
     else:
         claim.coverage_view = {"verdict": "no_policy", "summary": {"en": "No policy is linked to this claim yet.", "zh": "该理赔尚未关联保单。"}}
     claim.completeness = completeness_svc.assess(claim, policy, claim.checklist, docs)
+    # integrity checker ensemble (defensive validation; flags for a person, never decides)
+    try:
+        from . import integrity
+
+        integrity.run(db, claim)
+    except Exception as exc:  # pragma: no cover - the ensemble itself guards each checker
+        import logging
+
+        logging.getLogger("lantern").warning("integrity checks failed to run for %s: %s", claim.reference, exc)
     if claim.status in {ClaimStatus.DRAFT, ClaimStatus.INFORMATION_REQUIRED, ClaimStatus.READY_FOR_REVIEW}:
         target = ClaimStatus.READY_FOR_REVIEW if claim.completeness["ready"] else ClaimStatus.INFORMATION_REQUIRED
         if target != claim.status:
@@ -249,7 +258,16 @@ def submission_payload(db: Session, claim: Claim) -> dict:
         "documents": [{"id": d.id, "filename": d.filename, "sha256": d.sha256} for d in docs],
         "cover_letter_id": letter.id if letter else None,
         "cover_letter_hash": payload_hash({"s": letter.subject, "b": letter.body}) if letter else None,
+        # binds the approval to the integrity check inputs: if a document or the facts change, the hash changes and a new approval is needed
+        "integrity_inputs_hash": (_latest_check_hash(db, claim)),
     }
+
+
+def _latest_check_hash(db: Session, claim: Claim) -> str | None:
+    from . import integrity
+
+    row = integrity.latest(db, claim)
+    return row.inputs_hash if row else None
 
 
 def prepare_submission_approval(db: Session, user: User, claim: Claim, *, run_id: str | None = None, actor_type: str = "customer") -> ApprovalCreated:
@@ -260,7 +278,20 @@ def prepare_submission_approval(db: Session, user: User, claim: Claim, *, run_id
     if not claim.insurer_org_id:
         raise TransitionError("this policy is not connected to an insurer on the platform, so there is no channel to submit through; use assisted submission: download the claim pack, send it through the insurer's own channel, then mark the claim as sent")
     if not claim.completeness.get("ready"):
-        raise TransitionError("the claim pack still has required items missing: " + ", ".join(claim.completeness.get("missing_fields", []) + claim.completeness.get("missing_required_documents", []) + claim.completeness.get("outstanding_information", []) + claim.completeness.get("outstanding_actions", [])))
+        missing = claim.completeness.get("missing_fields", []) + claim.completeness.get("missing_required_documents", []) + claim.completeness.get("outstanding_information", []) + claim.completeness.get("outstanding_actions", [])
+        blocking_conflicts = [c["en"] for c in claim.completeness.get("conflicts", []) if c.get("code") in {"future_date", "safety_first"}]
+        raise TransitionError("the claim pack cannot be submitted yet: " + "; ".join((["required items missing: " + ", ".join(missing)] if missing else []) + blocking_conflicts))
+    # safety gates: schema and association, provenance, duplicates, dates, arithmetic, injection.
+    # Only failed validation blocks; warnings are shown to the customer and routed to the handler.
+    from . import integrity
+
+    policy_row = db.get(Policy, claim.policy_id)
+    if not policy_row or policy_row.user_id != user.id or claim.user_id != user.id:
+        raise TransitionError("the claim and policy must belong to the approving customer")
+    checks = integrity.run(db, claim, force=True)
+    blocking = integrity.blocking_reasons(checks)
+    if blocking:
+        raise TransitionError("the claim cannot be submitted until these records are corrected: " + "; ".join(blocking))
     # expire any earlier pending approval for the same claim
     for prior in db.execute(select(ApprovalRequest).where(ApprovalRequest.target_id == claim.id, ApprovalRequest.action_type == "submit_claim", ApprovalRequest.status == "pending")).scalars():
         prior.status = "expired"
@@ -278,6 +309,11 @@ def prepare_submission_approval(db: Session, user: User, claim: Claim, *, run_id
         {"en": "The insurer, not this assistant, decides whether the claim is covered.", "zh": "是否赔付由保险公司决定，而非本助手。"},
         {"en": "This demonstration environment sends the pack to a mock insurer endpoint.", "zh": "本演示环境会将材料包发送到模拟的保险公司接口。"},
     ]
+    customer_flags = [f for ch in checks.checkers for f in ch["findings"] if f.get("audience") in {"customer", "both"} and ch["status"] in {"warning", "human_review_required"}]
+    if customer_flags:
+        consequences.append({"en": f"{len(customer_flags)} automated check(s) raised points the insurer may ask about: " + "; ".join(f["message"]["en"] for f in customer_flags[:3]), "zh": f"{len(customer_flags)} 项自动检查提示了保险公司可能询问的事项：" + "；".join(f["message"]["zh"] for f in customer_flags[:3])})
+    if checks.escalations:
+        consequences.append({"en": "Items flagged for review will be shown to the handler alongside the pack (checks never decide a claim).", "zh": "被标记为需复核的事项将与材料包一起显示给理赔员（检查不会决定理赔结果）。"})
     approval = ApprovalRequest(
         user_id=user.id, run_id=run_id, action_type="submit_claim", target_type="claim", target_id=claim.id, payload=payload, payload_hash=payload_hash(payload),
         summary=summary, consequences=consequences, status="pending", token_hash=token_hash, expires_at=utcnow() + timedelta(minutes=settings.approval_ttl_minutes),
@@ -336,6 +372,13 @@ def execute_submission(db: Session, claim: Claim, approval: ApprovalRequest, use
         letter.sender_user_id = user.id
         add_event(db, claim, actor_type="customer", actor_id=user.id, event_type="message_sent", summary=f"Cover letter sent: {letter.subject}", data={"communication_id": letter.id})
     notify_org_staff(db, claim.insurer_org_id, kind="new_claim", title=f"New claim received: {claim.reference}", body=f"{claim.incident_type.replace('_', ' ')} claim on policy {policy.policy_number if policy else '?'}", link=f"/insurer/claims/{claim.id}")
+    # escalate flagged items to the handling organisation (a person decides; the checks never do)
+    from . import integrity
+
+    checks = integrity.latest(db, claim)
+    if checks and checks.escalations:
+        notify_org_staff(db, claim.insurer_org_id, kind="integrity_review", title=f"Checks flagged {len(checks.escalations)} item(s) on {claim.reference}", body="; ".join(e["message"]["en"] for e in checks.escalations[:3]), link=f"/insurer/claims/{claim.id}")
+        add_event(db, claim, actor_type="system", actor_id=None, event_type="integrity_escalated", summary=f"Automated checks flagged {len(checks.escalations)} item(s) for handler review", data={"codes": [e["code"] for e in checks.escalations]}, visible=False)
     audit.record(db, actor_type="customer", actor_id=user.id, action="claim.submit", target_type="claim", target_id=claim.id, details={"adapter": adapter.name, "insurer_reference": result.insurer_reference, "mock": result.is_mock, "idempotency_key": idem}, commit=False)
     return sub
 

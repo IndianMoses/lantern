@@ -2,8 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { STATUS_TONE, humanize } from "../lib/format";
 import { Icon } from "./Icons";
 
-export function Badge({ tone, children, plain }: { tone?: string; children: ReactNode; plain?: boolean }) {
-  return <span className={`badge ${tone || ""} ${plain ? "plain" : ""}`}>{children}</span>;
+export function Badge({ tone, children, plain, title }: { tone?: string; children: ReactNode; plain?: boolean; title?: string }) {
+  return <span className={`badge ${tone || ""} ${plain ? "plain" : ""}`} title={title}>{children}</span>;
 }
 
 export function StatusBadge({ status, label }: { status: string; label?: string }) {

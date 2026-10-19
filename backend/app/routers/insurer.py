@@ -13,6 +13,7 @@ from ..db import get_db
 from ..deps import Principal, insurer_claim_or_404, require_insurer, require_insurer_admin
 from ..models import AuditEvent, Claim, ClaimDecision, ClaimEvent, ClaimStatus, Communication, CustomerProfile, Document, InformationRequest, Organization, Policy, PolicyClause, Roles, Submission, User, utcnow
 from ..services import claims as claim_svc
+from ..services import integrity
 from ..services import policies as pol_svc
 from ..services.taxonomy import incident_label, insurance_label
 from .documents import doc_out
@@ -51,7 +52,15 @@ def queue_row(db: Session, c: Claim, lang: str, names: dict[str, str]) -> dict:
         "submitted_at": c.submitted_at.isoformat() if c.submitted_at else None, "status": c.status, "status_label": claim_svc.STATUS_LABELS.get(c.status, {}).get(lang, c.status), "completeness": comp.get("progress"), "completeness_ready": comp.get("ready"),
         "assigned_handler_id": c.assigned_handler_id, "assigned_handler": names.get(c.assigned_handler_id) if c.assigned_handler_id else None, "priority": c.priority, "updated_at": c.updated_at.isoformat(), "outstanding_action": outstanding,
         "estimated_loss": c.estimated_loss, "currency": c.currency, "age_days": age_days, "sla_breach": sla_breach, "insurer_reference": c.insurer_reference,
+        "checks": _check_summary(db, c),
     }
+
+
+def _check_summary(db: Session, c: Claim) -> dict | None:
+    row = integrity.latest(db, c)
+    if not row:
+        return None
+    return {"overall_status": row.overall_status, "escalations": len(row.escalations)}
 
 
 def _names(db: Session, ids: set[str]) -> dict[str, str]:
@@ -218,6 +227,7 @@ def workspace(claim_id: str, p: Principal = Depends(require_insurer), db: Sessio
         "submissions": [{"id": s.id, "status": s.status, "adapter": s.adapter, "mode": s.mode, "insurer_reference": s.response_payload.get("insurer_reference"), "mock": bool(s.response_payload.get("mock")), "error": s.error, "created_at": s.created_at.isoformat()} for s in subs],
         "internal_notes": [{"id": n.id, "author": names.get(n.actor_id, "Staff"), "text": n.summary, "created_at": n.created_at.isoformat()} for n in notes],
         "timeline": claim_svc.timeline(db, c, for_customer=False),
+        "checks": integrity.to_dict(integrity.latest(db, c), audience="insurer"),
         "audit": [{"seq": a.seq, "action": a.action, "actor_type": a.actor_type, "outcome": a.outcome, "details": a.details, "created_at": a.created_at.isoformat(), "hash": a.hash[:12]} for a in audits],
         "allowed_statuses": [s for s in (ClaimStatus.ACKNOWLEDGED, ClaimStatus.UNDER_REVIEW, ClaimStatus.SETTLED, ClaimStatus.CLOSED, ClaimStatus.REOPENED) if claim_svc.can_transition(c.status, s, "insurer")],
         "can_decide": claim_svc.can_transition(c.status, "approved", "insurer"),

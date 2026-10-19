@@ -415,3 +415,62 @@ export function MoneyText({ v, currency }: { v: number | null | undefined; curre
   const { lang } = useLang();
   return <>{money(v, currency, lang)}</>;
 }
+
+
+// ------------------------------------------------------- integrity checks
+export interface CheckFinding { code: string; message: Record<string, string>; evidence: Record<string, unknown>; severity: string; audience: string }
+export interface CheckerOut { checker_id: string; version: string; status: string; confidence: string; requires_human_review: boolean; findings: CheckFinding[]; note?: Record<string, unknown> }
+export interface Checks { id: string; overall_status: string; checkers: CheckerOut[]; escalations: { checker: string; code: string; severity: string; message: Record<string, string> }[]; created_at: string; ensemble_version: string; disclaimer: Record<string, string> }
+
+const CHECKER_LABEL: Record<string, { en: string; zh: string }> = {
+  dates: { en: "Dates and periods", zh: "日期与期间" }, document_integrity: { en: "Document integrity", zh: "文件完整性" }, duplicate_evidence: { en: "Duplicate evidence", zh: "重复材料" }, amount_plausibility: { en: "Amounts", zh: "金额" },
+  prompt_injection: { en: "Instruction like text", zh: "指令类文字" }, cross_document_consistency: { en: "Cross document consistency", zh: "文件间一致性" }, evidence_provenance: { en: "Evidence provenance", zh: "材料来源" },
+};
+const CHECK_STATUS_LABEL: Record<string, { en: string; zh: string; tone: string }> = {
+  passed: { en: "Passed", zh: "通过", tone: "ok" }, warning: { en: "Warning", zh: "提示", tone: "warn" }, failed_validation: { en: "Failed validation", zh: "未通过校验", tone: "bad" }, inconclusive: { en: "Inconclusive", zh: "无法判断", tone: "" }, human_review_required: { en: "For a person to review", zh: "需人工复核", tone: "accent" },
+};
+
+export function ChecksPanel({ checks, audience }: { checks: Checks | null | undefined; audience: "customer" | "insurer" }) {
+  const { lang, pick, t } = useLang();
+  const [open, setOpen] = useState<string | null>(null);
+  if (!checks) return <div className="small muted">—</div>;
+  const st = CHECK_STATUS_LABEL[checks.overall_status] || { en: checks.overall_status, zh: checks.overall_status, tone: "" };
+  const flagged = checks.checkers.filter((c) => c.findings.length > 0);
+  return (
+    <div className="stack" style={{ gap: 8 }}>
+      <div className="row between">
+        <div className="row" style={{ gap: 8 }}><strong>{t("integrity_checks")}</strong><Badge tone={st.tone}>{st[lang]}</Badge></div>
+        <span className="small muted">v{checks.ensemble_version} · {fmtDateTime(checks.created_at, lang)}</span>
+      </div>
+      <div className="checks">
+        {checks.checkers.map((c) => {
+          const cs = CHECK_STATUS_LABEL[c.status] || { en: c.status, zh: c.status, tone: "" };
+          return (
+            <div key={c.checker_id} className="check-row">
+              <Badge tone={cs.tone} plain>{cs[lang]}</Badge>
+              <div>
+                <div>{CHECKER_LABEL[c.checker_id]?.[lang] || c.checker_id} <span className="small muted">· {c.findings.length} {lang === "zh" ? "项" : c.findings.length === 1 ? "item" : "items"}{audience === "insurer" ? ` · ${lang === "zh" ? "置信度" : "confidence"} ${c.confidence}` : ""}</span></div>
+                {open === c.checker_id && (
+                  <ul className="small" style={{ margin: "6px 0 0", paddingLeft: 16 }}>
+                    {c.findings.length === 0 && <li className="muted">{lang === "zh" ? "未发现异常（这不代表文件真实）。" : "No anomaly detected (this does not establish authenticity)."}</li>}
+                    {c.findings.map((f, i) => <li key={i}><b>{f.severity}</b> · {pick(f.message)}</li>)}
+                    {c.note && typeof c.note.en === "string" && <li className="muted" style={{ listStyle: "none", marginLeft: -16, marginTop: 4 }}>{pick(c.note as Record<string, string>)}</li>}
+                  </ul>
+                )}
+              </div>
+              <button className="btn ghost sm" onClick={() => setOpen(open === c.checker_id ? null : c.checker_id)} aria-expanded={open === c.checker_id}><Icon name={open === c.checker_id ? "chevronUp" : "chevronDown"} size={14} /></button>
+            </div>
+          );
+        })}
+      </div>
+      {audience === "insurer" && checks.escalations.length > 0 && (
+        <div className="alert warn small">
+          <b>{lang === "zh" ? "需人工查看：" : "For a person to look at: "}</b>
+          <ul style={{ margin: "4px 0 0", paddingLeft: 16 }}>{checks.escalations.map((e, i) => <li key={i}>{pick(e.message)} <span className="muted">({e.checker.replace(/_/g, " ")}, {e.severity})</span></li>)}</ul>
+        </div>
+      )}
+      {flagged.length === 0 && <div className="small muted">{lang === "zh" ? "所有检查均未发现需要处理的事项。" : "No check raised anything to act on."}</div>}
+      <div className="small muted">{pick(checks.disclaimer)}</div>
+    </div>
+  );
+}

@@ -7,7 +7,7 @@ import { api } from "../lib/api";
 import { fmtDate, money } from "../lib/format";
 import { useLang } from "../lib/i18n";
 
-export interface QueueRow { id: string; reference: string; customer: { id: string; name: string }; insurance_type_label: string; incident_type_label: string; incident_date: string | null; submitted_at: string | null; status: string; status_label: string; completeness: number | null; completeness_ready: boolean | null; assigned_handler: string | null; priority: string; updated_at: string; outstanding_action: string | null; estimated_loss: number | null; currency: string; age_days: number | null; sla_breach: boolean; insurer_reference: string | null }
+export interface QueueRow { checks?: { overall_status: string; escalations: number } | null; id: string; reference: string; customer: { id: string; name: string }; insurance_type_label: string; incident_type_label: string; incident_date: string | null; submitted_at: string | null; status: string; status_label: string; completeness: number | null; completeness_ready: boolean | null; assigned_handler: string | null; priority: string; updated_at: string; outstanding_action: string | null; estimated_loss: number | null; currency: string; age_days: number | null; sla_breach: boolean; insurer_reference: string | null }
 
 export default function QueuePage() {
   const { lang } = useLang();
@@ -54,7 +54,7 @@ export default function QueuePage() {
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id} className="clickable" onClick={() => nav(`/insurer/claims/${r.id}`)}>
-                  <td className="mono">{r.reference}{r.sla_breach && <div><Badge tone="bad" plain>SLA</Badge></div>}</td>
+                  <td className="mono">{r.reference}{r.sla_breach && <div><Badge tone="bad" plain>SLA</Badge></div>}{r.checks && r.checks.escalations > 0 && <div><Badge tone="warn" plain title={lang === "zh" ? "自动检查标记了需人工查看的事项" : "Automated checks flagged items for a person"}>{lang === "zh" ? "复核" : "review"} {r.checks.escalations}</Badge></div>}</td>
                   <td>{r.customer.name}</td>
                   <td>{r.insurance_type_label}<div className="small muted">{r.incident_type_label}</div></td>
                   <td>{fmtDate(r.incident_date, lang)}</td>
