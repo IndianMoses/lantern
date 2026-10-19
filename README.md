@@ -17,7 +17,7 @@ Everything in the demo is fictional: insurers, policies, customers, claims.
 Requirements: Python 3.11+, Node 20+ (only to build the interface).
 
 ```bash
-git clone <this repository> lantern && cd lantern
+git clone https://github.com/danielshenzhen/lantern.git && cd lantern
 make install            # pip install backend, npm install frontend
 make build              # builds the single page app into frontend/dist
 make backend            # http://127.0.0.1:8000  (seeds the demo database on first start)
