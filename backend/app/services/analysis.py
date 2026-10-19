@@ -277,6 +277,12 @@ def run(db: Session, user: User, *, mode: str | None = None, run_id: str | None 
     end_dates = {p.policy_number: p.end_date for p, _ in all_policies}
     waiting_active = any(d["need"] == "waiting_period_active" for d in final)
     for d in final:
+        # evidence entries carry the clause text so the interface can open the clause without another request
+        for e in d.get("evidence", []):
+            hit = clause_index.get(e.get("clause_id", ""))
+            if hit:
+                _, c = hit
+                e.update({"text": " ".join((c.text or "").split())[:900], "section": c.section, "language": c.language, "translations": c.translations or {}, "tags": c.tags or [], "kind": c.kind, "title": c.title})
         pr = prioritisation.prioritise(d, verification=d["verification"], concerns=profile.concerns or [], policy_end_dates=end_dates, today=today, waiting_period_active=waiting_active and d["need"] in {"pet_vet_fees", "ebike_theft"})
         d.update({"risk_priority": pr["risk_priority"], "evidence_confidence": pr["evidence_confidence"], "priority_rationale": pr["rationale"], "priority_score": pr["score"]})
         d["requires_human_review"] = d["verification"]["overall"] == "requires_review" or d["kind"] == "unresolved"

@@ -53,7 +53,11 @@ export interface Finding {
   triggered_by: string;
   evidence: ClauseRef[];
   policies: string[];
+  risk_priority?: string;
+  evidence_confidence?: string;
+  verification?: { overall: string };
 }
+const PRIORITY_SHORT: Record<string, { en: string; zh: string }> = { critical_to_investigate: { en: "critical to investigate", zh: "需优先核查" }, high: { en: "high priority", zh: "高优先级" }, medium: { en: "medium priority", zh: "中等优先级" }, low: { en: "low priority", zh: "低优先级" }, information_needed: { en: "information needed", zh: "需补充信息" } };
 export interface Approval {
   id: string;
   action_type: string;
@@ -165,7 +169,7 @@ export function CoverageViewPanel({ v }: { v: CoverageView }) {
 }
 
 export function GapFindings({ findings, showCovered }: { findings: Finding[]; showCovered?: boolean }) {
-  const { t, pick } = useLang();
+  const { t, pick, lang } = useLang();
   const list = showCovered ? findings : findings.filter((f) => f.status !== "covered");
   return (
     <div className="findings">
@@ -176,9 +180,10 @@ export function GapFindings({ findings, showCovered }: { findings: Finding[]; sh
             <div className="row" style={{ gap: 8 }}>
               <strong>{pick(f.label)}</strong>
               <StatusBadge status={f.status} label={t(f.status)} />
-              <span className="small muted">{f.severity}</span>
+              {f.risk_priority ? <span className={`priority ${f.risk_priority}`}>{PRIORITY_SHORT[f.risk_priority]?.[lang] || f.risk_priority}</span> : <span className="small muted">{f.severity}</span>}
+              {f.verification && f.verification.overall === "requires_review" && <Badge tone="warn" plain>{lang === "zh" ? "需人工复核" : "needs a person"}</Badge>}
             </div>
-            <p style={{ margin: "4px 0" }}>{pick(f.explanation)}</p>
+            <p style={{ margin: "4px 0" }}><RichText text={pick(f.explanation)} /></p>
             <div className="small" style={{ color: "var(--ink-2)" }}>
               <b>{t("suggested")}:</b> {pick(f.suggested_action)}
             </div>

@@ -159,6 +159,8 @@ def extract_clause_facts(clause: PolicyClause, policy: Policy) -> list[FactDTO]:
             window = text[max(0, m.start() - 80) : m.end() + 60].lower()
             if "waiting" in window or "等待" in window or ("未追回" in window) or ("first shows" in window) or ("satisfied" in window and "未" in window):
                 ftype = "waiting_period"
+            elif any(k in window for k in ("police", "crime reference", "公安", "报警", "派出所", "carrier")) and any(k in window for k in ("report", "obtained", "报案", "回执")):
+                ftype = "police_report_deadline"
             elif any(k in window for k in ("notify", "tell us", "report", "notified", "报案", "通知", "submitted", "claims must")):
                 ftype = "notification_deadline"
             elif any(k in window for k in ("trip", "行程", "period of insurance", "any one period")):

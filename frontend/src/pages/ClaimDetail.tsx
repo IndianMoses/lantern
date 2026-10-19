@@ -220,7 +220,10 @@ export default function ClaimDetailPage() {
             <div className="stack">
               {uploadFor !== "any" && <div className="alert info small"><b>{t("why_needed")}:</b> {pick(uploadFor.reason)}<br /><b>{t("how_to_get")}:</b> {pick(uploadFor.how)}</div>}
               {uploadFor === "any" && <Field label={lang === "zh" ? "文件类型" : "Document type"}><select className="select" value={docType} onChange={(e) => setDocType(e.target.value)}>{["photo", "receipt", "invoice", "estimate", "police_report", "correspondence", "medical", "proof_of_ownership", "other"].map((x) => <option key={x} value={x}>{x}</option>)}</select></Field>}
-              <input type="file" accept=".pdf,.txt,.md,.png,.jpg,.jpeg,.webp" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} disabled={busy} />
+              <div className="row">
+                <label className="btn primary"><Icon name="upload" size={16} />{t("choose_file")}<input type="file" style={{ display: "none" }} accept=".pdf,.txt,.md,.png,.jpg,.jpeg,.webp" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} disabled={busy} /></label>
+                <label className="btn"><Icon name="camera" size={16} />{t("take_photo")}<input type="file" style={{ display: "none" }} accept="image/*" capture="environment" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} disabled={busy} /></label>
+              </div>
               <div className="small muted">{lang === "zh" ? "PDF、PNG、JPEG、WEBP 或文本，最大 10 MB。原件会被完整保留，不会被修改。" : "PDF, PNG, JPEG, WEBP or text, up to 10 MB. The original file is kept unchanged."}</div>
             </div>
           </Modal>

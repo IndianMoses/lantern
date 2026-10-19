@@ -88,7 +88,7 @@ def build(user: User, profile: CustomerProfile, policies: list[tuple[Policy, lis
             ntype = "deductible"
         elif "waiting_period" in tags:
             ntype = "waiting_period"
-        k = g.node(f"clause:{c.id}", ntype, {"en": f"§{c.clause_ref} {c.title}", "zh": f"§{c.clause_ref} {c.title}"}, ref_type="clause", ref_id=c.id, citation=f"{p.policy_number} §{c.clause_ref}", kind=c.kind, amount=c.amount, policy_id=p.id)
+        k = g.node(f"clause:{c.id}", ntype, {"en": f"§{c.clause_ref} {c.title}", "zh": f"§{c.clause_ref} {c.title}"}, ref_type="clause", ref_id=c.id, citation=f"{p.policy_number} §{c.clause_ref}", kind=c.kind, amount=c.amount, policy_id=p.id, section=c.section, excerpt=" ".join((c.text or "").split())[:400], language=c.language, translations=c.translations or {}, title=c.title)
         g.edge(f"policy:{p.id}", k, "CONTAINS_CLAUSE", source_ref=f"clause:{c.id}", kind="stated", verified=True)
         if ntype == "limit":
             g.edge(f"policy:{p.id}", k, "HAS_LIMIT", source_ref=f"clause:{c.id}", kind="stated", verified=True)
