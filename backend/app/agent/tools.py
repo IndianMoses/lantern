@@ -312,14 +312,17 @@ def analyze_coverage_gaps(ctx: ToolContext, params: NoParams) -> dict:
     prof = ctx.db.get(CustomerProfile, ctx.user.id)
     if not prof:
         raise ToolError("the customer has no profile yet; ask them to complete it in Settings", code="missing_profile")
-    result = gap_engine.analyze(prof, pol_svc.policies_with_clauses(ctx.db, ctx.user.id))
-    ga = GapAnalysis(user_id=ctx.user.id, run_id=ctx.run.id, findings=result["findings"], summary=result["summary"], inputs_snapshot={"assets": prof.assets, "activities": prof.activities, "housing": prof.housing})
-    ctx.db.add(ga)
-    ctx.db.flush()
+    # The same pipeline as the Coverage gaps page (analysts, challenge, judge,
+    # verification, calculation), run synchronously in deterministic mode so
+    # the chat answer and the page never disagree.
+    from ..services import analysis as analysis_svc
+
+    ga = analysis_svc.run(ctx.db, ctx.user, mode="deterministic", run_id=ctx.run.id, language=ctx.language)
+    result = {"findings": ga.findings, "summary": ga.summary, "disclaimer": analysis_svc.DISCLAIMER}
     for f in result["findings"]:
         ctx.remember_clauses(f.get("evidence", []))
-    ctx.blocks.append({"type": "gap_findings", "analysis_id": ga.id, "findings": result["findings"][:8], "summary": result["summary"]})
-    audit.record(ctx.db, actor_type="agent", actor_id=ctx.user.id, action="gap_analysis.run", target_type="gap_analysis", target_id=ga.id, details={"run_id": ctx.run.id, "counts": result["summary"]["counts"]}, commit=False)
+    shown = [f for f in result["findings"] if f["status"] != "covered"][:8] or result["findings"][:8]
+    ctx.blocks.append({"type": "gap_findings", "analysis_id": ga.id, "findings": shown, "summary": result["summary"]})
     return {"analysis_id": ga.id, **result}
 
 

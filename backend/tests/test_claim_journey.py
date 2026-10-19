@@ -42,7 +42,7 @@ def test_full_claim_journey(client, login, jordan, tmp_root):
     assert out["run"]["grounding"]["citations_valid"] >= 1 and "NGM-TC-999001" in out["message"]["content"]
 
     # 5. gap analysis sees the uploaded policy
-    gaps = cust.post("/api/gaps/analyze").json()
+    gaps = cust.post("/api/gaps/analyze", json={"sync": True}).json()["analysis"]
     assert "NGM-TC-999001" in gaps["summary"]["policies_considered"]
     assert any(f["need"] == "laptop_away" for f in gaps["findings"])
 

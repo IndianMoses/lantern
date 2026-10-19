@@ -54,16 +54,32 @@ class Organization(TimestampMixin, Base):
     claims_email: Mapped[str | None] = mapped_column(String(200))
     country: Mapped[str] = mapped_column(String(2), default="GB")
     integration_mode: Mapped[str] = mapped_column(String(20), default="mock")  # mock | api | assisted
+    kind: Mapped[str] = mapped_column(String(20), default="insurer")  # insurer | bank
 
     staff: Mapped[list[User]] = relationship(back_populates="organization")
 
 
 class Roles:
+    """Permission tiers (see docs/SECURITY_SELF_ASSESSMENT.md).
+
+    1 customer · 2 household member · 3 adviser or broker · 4 claims handler ·
+    5 reviewer (senior claims) · 6 organisation administrator (insurer or bank)
+    · 7 platform operator. Every endpoint checks the role server side; the
+    tier number is documentation for people, not a shortcut in code.
+    """
+
     CUSTOMER = "customer"
+    HOUSEHOLD_MEMBER = "household_member"
+    ADVISER = "adviser"
     INSURER_HANDLER = "insurer_handler"
+    INSURER_REVIEWER = "insurer_reviewer"
     INSURER_ADMIN = "insurer_admin"
+    BANK_ADMIN = "bank_admin"
     PLATFORM_ADMIN = "platform_admin"
-    INSURER_ROLES = {INSURER_HANDLER, INSURER_ADMIN}
+    INSURER_ROLES = {INSURER_HANDLER, INSURER_REVIEWER, INSURER_ADMIN}
+    BANK_ROLES = {BANK_ADMIN}
+    PRIVILEGED = {INSURER_ADMIN, BANK_ADMIN, PLATFORM_ADMIN}  # MFA expected
+    TIER = {CUSTOMER: 1, HOUSEHOLD_MEMBER: 2, ADVISER: 3, INSURER_HANDLER: 4, INSURER_REVIEWER: 5, INSURER_ADMIN: 6, BANK_ADMIN: 6, PLATFORM_ADMIN: 7}
 
 
 class User(TimestampMixin, Base):
@@ -77,6 +93,9 @@ class User(TimestampMixin, Base):
     locale: Mapped[str] = mapped_column(String(8), default="en")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
+    mfa_secret: Mapped[str | None] = mapped_column(String(64))  # TOTP secret; present only when MFA is enabled
+    mfa_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    password_changed_at: Mapped[datetime | None] = mapped_column(DateTime)
 
     organization: Mapped[Organization | None] = relationship(back_populates="staff")
     profile: Mapped[CustomerProfile | None] = relationship(back_populates="user", uselist=False)
@@ -95,6 +114,8 @@ class UserSession(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     last_seen_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     ip: Mapped[str | None] = mapped_column(String(64))
+    user_agent: Mapped[str | None] = mapped_column(String(200))
+    mfa_passed: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class CustomerProfile(TimestampMixin, Base):
@@ -150,6 +171,13 @@ class Policy(TimestampMixin, Base):
     summary: Mapped[dict] = mapped_column(JSON, default=dict)  # key limits etc. for cards
     extraction_confidence: Mapped[float | None] = mapped_column(Float)
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Policy versions: a renewal or endorsement is a new row whose period
+    # defines the wording in force; ``supersedes_policy_id`` links the chain so
+    # a historical claim is read against the version in force on the
+    # incident date.
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    supersedes_policy_id: Mapped[str | None] = mapped_column(String(36))
+    endorsements: Mapped[list] = mapped_column(JSON, default=list)  # [{ref, title, text, overrides_clause_ref, effective_from}]
 
     clauses: Mapped[list[PolicyClause]] = relationship(back_populates="policy", cascade="all, delete-orphan", order_by="PolicyClause.position")
 
@@ -451,6 +479,176 @@ class GapAnalysis(Base):
     summary: Mapped[dict] = mapped_column(JSON, default=dict)
     inputs_snapshot: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    # multi-agent pipeline metadata (added with the coverage intelligence release)
+    job_id: Mapped[str | None] = mapped_column(String(36))
+    mode: Mapped[str | None] = mapped_column(String(20))  # deterministic | models | mixed
+    models: Mapped[dict] = mapped_column(JSON, default=dict)  # {"A": {...}, "B": {...}, "C": {...}}
+    pipeline_version: Mapped[str | None] = mapped_column(String(20))
+
+
+# ------------------------------------------------- coverage intelligence ---
+
+
+class FactStatus:
+    KNOWN = "known"
+    UNKNOWN = "unknown"
+    NOT_APPLICABLE = "not_applicable"
+    NOT_FOUND = "not_found"
+    AMBIGUOUS = "ambiguous"
+    CONFLICTING = "conflicting"
+
+
+class PolicyFact(Base):
+    """A typed, normalised fact extracted from a policy wording, always tied to
+    the clause (and excerpt) it came from. ``status`` keeps the difference
+    between known, unknown, not applicable, not found, ambiguous and
+    conflicting explicit; a missing value is never turned into zero."""
+
+    __tablename__ = "policy_facts"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    policy_id: Mapped[str] = mapped_column(ForeignKey("policies.id"), index=True, nullable=False)
+    clause_id: Mapped[str | None] = mapped_column(ForeignKey("policy_clauses.id"), index=True)
+    fact_type: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    subject: Mapped[str] = mapped_column(String(80), nullable=False)
+    tags: Mapped[list] = mapped_column(JSON, default=list)
+    value: Mapped[float | None] = mapped_column(Float)
+    unit: Mapped[str | None] = mapped_column(String(20))  # GBP | CNY | days | hours | percent | flag
+    text_excerpt: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(20), default=FactStatus.KNOWN)
+    source: Mapped[str] = mapped_column(String(20), default="stated")  # stated | inferred
+    confidence: Mapped[float] = mapped_column(Float, default=1.0)
+    effective_from: Mapped[date | None] = mapped_column(Date)
+    effective_to: Mapped[date | None] = mapped_column(Date)
+    verification_status: Mapped[str] = mapped_column(String(20), default="unverified")  # unverified | verified | rejected
+    ambiguity: Mapped[str | None] = mapped_column(Text)
+    extractor: Mapped[str] = mapped_column(String(60), default="rules")
+    extractor_version: Mapped[str] = mapped_column(String(20), default="1")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class CoverageAnalysisJob(Base):
+    """Backend job record for one coverage analysis run. The stages list is the
+    real pipeline status that the interface renders; it is never animated."""
+
+    __tablename__ = "coverage_analysis_jobs"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="queued")  # queued | running | completed | failed
+    mode: Mapped[str] = mapped_column(String(20), default="deterministic")
+    stages: Mapped[list] = mapped_column(JSON, default=list)
+    models: Mapped[dict] = mapped_column(JSON, default=dict)
+    analysis_id: Mapped[str | None] = mapped_column(ForeignKey("gap_analyses.id"))
+    error: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+class CoverageFinding(Base):
+    """One persisted finding of an analysis, with its evidence trail,
+    verification result, prioritisation and review state."""
+
+    __tablename__ = "coverage_findings"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    analysis_id: Mapped[str] = mapped_column(ForeignKey("gap_analyses.id"), index=True, nullable=False)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    need: Mapped[str] = mapped_column(String(80), nullable=False)
+    kind: Mapped[str] = mapped_column(String(30), default="potential_gap")  # policy_fact | potential_gap | hypothetical_scenario | unresolved
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    severity: Mapped[str] = mapped_column(String(10), default="low")
+    risk_priority: Mapped[str] = mapped_column(String(30), default="low")
+    evidence_confidence: Mapped[str] = mapped_column(String(10), default="low")
+    payload: Mapped[dict] = mapped_column(JSON, default=dict)  # the full finding dict shown to the customer
+    verification: Mapped[dict] = mapped_column(JSON, default=dict)
+    requires_human_review: Mapped[bool] = mapped_column(Boolean, default=False)
+    review_status: Mapped[str] = mapped_column(String(20), default="none")  # none | requested | resolved
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class GraphNode(Base):
+    __tablename__ = "graph_nodes"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    analysis_id: Mapped[str] = mapped_column(ForeignKey("gap_analyses.id"), index=True, nullable=False)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    key: Mapped[str] = mapped_column(String(120), nullable=False)
+    node_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    label: Mapped[dict] = mapped_column(JSON, default=dict)
+    status: Mapped[str | None] = mapped_column(String(30))
+    ref_type: Mapped[str | None] = mapped_column(String(30))
+    ref_id: Mapped[str | None] = mapped_column(String(36))
+    data: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class GraphEdge(Base):
+    __tablename__ = "graph_edges"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    analysis_id: Mapped[str] = mapped_column(ForeignKey("gap_analyses.id"), index=True, nullable=False)
+    source_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    target_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    relation: Mapped[str] = mapped_column(String(40), nullable=False)
+    provenance: Mapped[dict] = mapped_column(JSON, default=dict)  # {"kind": stated|inferred, "source": fact:<id>|clause:<id>|rule:<name>}
+    verified: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class ReviewRequest(Base):
+    """A customer's request for a person to look at an analysis finding."""
+
+    __tablename__ = "review_requests"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    analysis_id: Mapped[str | None] = mapped_column(ForeignKey("gap_analyses.id"))
+    finding_id: Mapped[str | None] = mapped_column(ForeignKey("coverage_findings.id"))
+    claim_id: Mapped[str | None] = mapped_column(ForeignKey("claims.id"))
+    reason: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(20), default="open")  # open | resolved
+    resolution: Mapped[str | None] = mapped_column(Text)
+    resolved_by_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+
+class ClaimCheckResult(Base):
+    """Output of the integrity checker ensemble for one claim at one moment."""
+
+    __tablename__ = "claim_check_results"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    claim_id: Mapped[str] = mapped_column(ForeignKey("claims.id"), index=True, nullable=False)
+    overall_status: Mapped[str] = mapped_column(String(30), nullable=False)  # passed | warning | failed_validation | inconclusive | human_review_required
+    checkers: Mapped[list] = mapped_column(JSON, default=list)
+    escalations: Mapped[list] = mapped_column(JSON, default=list)
+    inputs_hash: Mapped[str] = mapped_column(String(64), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class ConsentRecord(Base):
+    """Consent decisions, append only: the latest row per purpose is current."""
+
+    __tablename__ = "consent_records"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    purpose: Mapped[str] = mapped_column(String(60), nullable=False)
+    granted: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    source: Mapped[str] = mapped_column(String(20), default="customer")  # customer | bank | default
+    note: Mapped[str | None] = mapped_column(String(300))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)  # token hash
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class LoginAttempt(Base):
+    """Failed login counter per account for lockout (reset on success)."""
+
+    __tablename__ = "login_attempts"
+    email: Mapped[str] = mapped_column(String(200), primary_key=True)
+    failures: Mapped[int] = mapped_column(Integer, default=0)
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
 
 
 class Notification(Base):

@@ -14,6 +14,7 @@ os.environ["OPERATION_LOG_DIR"] = str(_TMP / "logs")
 os.environ["LLM_PROVIDER"] = "deterministic"
 os.environ["SECRET_KEY"] = "test-secret-key-not-for-production"
 os.environ["ANTHROPIC_API_KEY"] = ""
+os.environ["ANALYSIS_RUN_IN_BACKGROUND"] = "false"
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 

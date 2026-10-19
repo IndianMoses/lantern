@@ -48,5 +48,7 @@ def get_db() -> Generator[Session, None, None]:
 
 def init_db() -> None:
     from . import models  # noqa: F401  (register tables)
+    from .migrations import upgrade
 
     Base.metadata.create_all(bind=engine)
+    upgrade(engine)
