@@ -15,7 +15,7 @@ from . import audit
 from .config import REPO_ROOT, settings
 from .db import SessionLocal, init_db
 from .models import User
-from .routers import approvals, assistant, auth, claims, communications, dev, documents, gaps, insurer, policies, profile
+from .routers import account, approvals, assistant, auth, bank, claims, communications, dev, documents, gaps, insurer, policies, profile
 
 log = logging.getLogger("lantern")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -52,7 +52,10 @@ async def security_headers(request: Request, call_next):
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "same-origin")
-    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    # camera is allowed for evidence capture on the device itself (self), nothing else
+    response.headers.setdefault("Permissions-Policy", "camera=(self), microphone=(), geolocation=()")
+    response.headers.setdefault("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; manifest-src 'self'; worker-src 'self'")
+    response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
     if request.url.path.startswith("/api/"):
         response.headers.setdefault("Cache-Control", "no-store")
     return response
@@ -64,7 +67,7 @@ async def unhandled(request: Request, exc: Exception):
     return JSONResponse(status_code=500, content={"detail": "Internal error. The action was not completed."})
 
 
-for r in (auth.router, profile.router, policies.router, documents.router, gaps.router, claims.router, communications.router, approvals.router, assistant.router, insurer.router):
+for r in (auth.router, profile.router, account.router, policies.router, documents.router, gaps.router, claims.router, communications.router, approvals.router, assistant.router, insurer.router, bank.router):
     app.include_router(r)
 if settings.is_dev:
     app.include_router(dev.router)

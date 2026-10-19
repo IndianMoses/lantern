@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../components/Icons";
 import { CustomerShell } from "../components/Layout";
+import { ConsentPanel, SecurityPanel, SharesPanel } from "../components/Security";
 import { Field, Spinner, useToast } from "../components/ui";
 import { api, errorMessage } from "../lib/api";
 import { useAuth } from "../lib/auth";
@@ -17,8 +18,13 @@ export default function SettingsPage() {
   const toast = useToast();
   const [p, setP] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
+  const [records, setRecords] = useState<{ type: "policy" | "claim"; id: string; label: string }[]>([]);
   useEffect(() => {
     api.get<{ profile: Profile | null }>("/api/profile").then((r) => setP(r.profile || { country: "GB", city: "", currency: "GBP", housing: null, household: { adults: 1, children: 0 }, assets: [], activities: [], concerns: [], preferences: { language: lang }, consents: {} }));
+    Promise.all([
+      api.get<{ policies: { id: string; policy_number: string; product_name: string }[] }>("/api/policies").catch(() => ({ policies: [] })),
+      api.get<{ claims: { id: string; reference: string; incident_type: string }[] }>("/api/claims").catch(() => ({ claims: [] })),
+    ]).then(([pol, cl]) => setRecords([...pol.policies.map((x) => ({ type: "policy" as const, id: x.id, label: `${x.policy_number} · ${x.product_name}` })), ...cl.claims.map((x) => ({ type: "claim" as const, id: x.id, label: `${x.reference} · ${x.incident_type}` }))]));
   }, []);
   if (!p) return <CustomerShell title={t("settings")}><Spinner /></CustomerShell>;
   const save = async () => {
@@ -87,6 +93,14 @@ export default function SettingsPage() {
           </tbody>
         </table>
         <button className="btn sm" style={{ marginTop: 8 }} onClick={() => setP({ ...p, assets: [...p.assets, { type: "other", label: "", value: null }] })}>+ {lang === "zh" ? "添加资产" : "Add asset"}</button>
+      </div>
+      <div className="grid cols-2" style={{ marginTop: 16 }}>
+        <div className="card"><ConsentPanel /></div>
+        <div className="card"><SharesPanel records={records} /></div>
+      </div>
+      <div className="card" style={{ marginTop: 16 }}>
+        <h3>{lang === "zh" ? "账户安全" : "Account security"}</h3>
+        <SecurityPanel />
       </div>
     </CustomerShell>
   );

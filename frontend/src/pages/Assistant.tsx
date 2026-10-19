@@ -55,6 +55,29 @@ export function RunTransparency({ run, lang }: { run: Run; lang: string }) {
   );
 }
 
+/** Thumbs up or down on an assistant answer. Stored per message; feeds the aggregate "answers rated helpful" metric only. */
+export function FeedbackButtons({ messageId }: { messageId: string }) {
+  const { t } = useLang();
+  const toast = useToast();
+  const [given, setGiven] = useState<1 | -1 | null>(null);
+  const send = async (rating: 1 | -1) => {
+    if (given) return;
+    try {
+      await api.post("/api/feedback", { message_id: messageId, rating });
+      setGiven(rating);
+      toast(t("feedback_thanks"));
+    } catch (e) {
+      toast(errorMessage(e));
+    }
+  };
+  return (
+    <span className="row" style={{ gap: 2 }}>
+      <button className={`btn ghost sm icon${given === 1 ? " active" : ""}`} aria-label={t("helpful")} title={t("helpful")} disabled={given !== null} onClick={() => send(1)}><Icon name="thumbUp" size={14} /></button>
+      <button className={`btn ghost sm icon${given === -1 ? " active" : ""}`} aria-label={t("not_helpful")} title={t("not_helpful")} disabled={given !== null} onClick={() => send(-1)}><Icon name="thumbDown" size={14} /></button>
+    </span>
+  );
+}
+
 export default function AssistantPage() {
   const { t, lang, pick } = useLang();
   const toast = useToast();
@@ -190,6 +213,7 @@ export default function AssistantPage() {
                       </div>
                       <div className="meta">
                         <span>{fmtDateTime(m.created_at, lang)}</span>
+                        {m.run_id && <FeedbackButtons messageId={m.id} />}
                         {m.run_id && (
                           <button className="btn ghost sm" style={{ padding: 0 }} onClick={async () => { if (!runs[m.run_id!]) { const r = await api.get<{ run: Run }>(`/api/assistant/runs/${m.run_id}`); setRuns((rs) => ({ ...rs, [m.run_id!]: r.run })); } setShowRun(showRun === m.run_id ? null : m.run_id); }}>
                             {t("why_this_answer")} <Icon name={showRun === m.run_id ? "chevronUp" : "chevronDown"} size={13} />

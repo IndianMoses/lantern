@@ -166,6 +166,8 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 12px 0; }
 .btn.ghost:hover { background: var(--brand-50); }
 .btn.sm { min-height: 30px; padding: 4px 10px; font-size: 13px; }
 .btn.icon { padding: 6px; min-width: 36px; }
+.btn.sm.icon { min-width: 30px; padding: 4px; }
+.btn.ghost.active { color: var(--brand-900); background: var(--brand-100); }
 .btn .ico { width: 16px; height: 16px; }
 .badge { display: inline-flex; align-items: center; gap: 6px; padding: 1px 8px; border-radius: var(--radius-badge); font-size: 12px; font-weight: 600; line-height: 1.7; background: var(--grey-200); color: var(--text-body); white-space: nowrap; border: 1px solid transparent; }
 .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .75; }
@@ -376,4 +378,14 @@ svg.chart text { font-family: var(--font-sans); font-size: 11px; fill: var(--tex
   .sidebar, .bottom-nav, .mobile-bar, .topbar .tools { display: none !important; }
   .shell { grid-template-columns: 1fr; }
   .card { border-color: #999; }
+}
+
+/* Tables that become cards on small screens: each cell shows its column name. */
+@media (max-width: 640px) {
+  .table.stack-sm thead { display: none; }
+  .table.stack-sm, .table.stack-sm tbody, .table.stack-sm tr, .table.stack-sm td { display: block; width: 100%; }
+  .table.stack-sm tr { border: 1px solid var(--border); border-radius: var(--radius-control); padding: 8px 10px; margin-bottom: 8px; background: var(--surface); }
+  .table.stack-sm td { border: 0; padding: 3px 0; display: flex; justify-content: space-between; gap: 12px; text-align: right; }
+  .table.stack-sm td::before { content: attr(data-label); color: var(--text-tertiary); font-size: 12px; text-align: left; flex: 0 0 auto; }
+  .table.stack-sm td.num { font-variant-numeric: tabular-nums; }
 }

@@ -16,3 +16,4 @@ frontend/dist/
 *.log
 .DS_Store
 scripts/node_modules
+frontend/tsconfig.tsbuildinfo

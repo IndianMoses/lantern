@@ -69,7 +69,10 @@ ORGS = [
     {"code": "pawfield", "name": "Pawfield Pet Insurance", "name_zh": "爪田宠物保险", "claims_email": "claims@pawfield.example", "country": "GB"},
     {"code": "pengcheng", "name": "鹏城安保", "name_zh": "鹏城安保", "claims_email": "claims@pengcheng-anbao.example", "country": "CN"},
     {"code": "xinghe", "name": "星河数码保险服务", "name_zh": "星河数码保险服务", "claims_email": "service@xinghe-digital.example", "country": "CN"},
+    # the bank whose customers use the platform (aggregate analytics only; no claims handling)
+    {"code": "harbourline", "name": "Harbourline Bank", "name_zh": "港线银行", "claims_email": None, "country": "GB", "kind": "bank"},
 ]
+BANK_CUSTOMERS = {"alex", "priya", "omar", "chloe", "dev", "sofia", "tomas"}
 
 STAFF = [
     {"email": "jordan.reyes@northgate.example", "name": "Jordan Reyes", "org": "northgate", "role": Roles.INSURER_HANDLER, "password": "jordan-demo-2026", "locale": "en"},
@@ -79,6 +82,7 @@ STAFF = [
     {"email": "zhou.min@pengcheng.example", "name": "周敏", "org": "pengcheng", "role": Roles.INSURER_ADMIN, "password": "zhoumin-demo-2026", "locale": "zh"},
     {"email": "nia.williams@pawfield.example", "name": "Nia Williams", "org": "pawfield", "role": Roles.INSURER_HANDLER, "password": "nia-demo-2026", "locale": "en"},
     {"email": "lee.park@albion.example", "name": "Lee Park", "org": "albion", "role": Roles.INSURER_HANDLER, "password": "lee-demo-2026", "locale": "en"},
+    {"email": "dana.whitfield@harbourline.example", "name": "Dana Whitfield", "org": "harbourline", "role": Roles.BANK_ADMIN, "password": "dana-demo-2026", "locale": "en"},
 ]
 
 CUSTOMERS = [
@@ -239,7 +243,10 @@ def _claim_ref(n: int) -> str:
 
 def wipe(db: Session) -> None:
     db.execute(update(Policy).values(document_id=None))  # break the policy <-> document cycle
+    from ..models import ClaimCheckResult, ConsentRecord, CoverageAnalysisJob, CoverageFinding, Feedback, GraphEdge, GraphNode, LoginAttempt, PasswordResetToken, PolicyFact, RecordShare, ReviewRequest
+
     for table in [
+        Feedback, ReviewRequest, GraphEdge, GraphNode, CoverageFinding, CoverageAnalysisJob, ClaimCheckResult, PolicyFact, RecordShare, ConsentRecord, PasswordResetToken, LoginAttempt,
         ToolExecution, Message, GapAnalysis, Submission, Communication, ApprovalRequest, AgentRun, Conversation, Notification,
         ClaimDecision, InformationRequest, ClaimEvent, Document, Claim, PolicyClause, Policy, CustomerProfile,
         UserSession, User, Organization, AuditEvent,
@@ -255,7 +262,7 @@ def seed(db: Session, *, demo_dir: Path | None = None) -> dict:
 
     orgs: dict[str, Organization] = {}
     for o in ORGS:
-        org = Organization(**o, integration_mode="mock")
+        org = Organization(**{k: v for k, v in o.items()}, integration_mode="mock")
         db.add(org)
         orgs[o["code"]] = org
     db.flush()
@@ -281,8 +288,13 @@ def seed(db: Session, *, demo_dir: Path | None = None) -> dict:
         u = User(email=c["email"], password_hash=hash_password(c["password"]), full_name=c["name"], role=Roles.CUSTOMER, locale=c["locale"], is_demo=True)
         db.add(u)
         db.flush()
-        db.add(CustomerProfile(user_id=u.id, **c["profile"]))
+        db.add(CustomerProfile(user_id=u.id, **c["profile"], bank_org_id=orgs["harbourline"].id if c["key"] in BANK_CUSTOMERS else None, bank_customer_ref=f"HLB-REF-{abs(hash(c['key'])) % 100000:05d}" if c["key"] in BANK_CUSTOMERS else None))
         users[c["key"]] = u
+        from ..services import bank as bank_svc
+
+        bank_svc.ensure_default_consents(db, u)
+        if c["key"] in BANK_CUSTOMERS:
+            bank_svc.record_consent(db, u.id, "analytics_aggregate", True, source="customer", note="demo onboarding")
         for p in c["policies"]:
             tpl = TEMPLATES[p["template"]]
             pol = Policy(
@@ -315,6 +327,10 @@ def seed(db: Session, *, demo_dir: Path | None = None) -> dict:
             doc = _doc(db, owner=u, path=wpath, doc_type="policy_wording", policy=pol, text=wtext)
             pol.document_id = doc.id
             policies[p["number"]] = pol
+    # policy version chain: a renewal supersedes the expired wording it replaced
+    if "NGM-HC-215511-R" in policies and "NGM-HC-215511" in policies:
+        policies["NGM-HC-215511-R"].version = 2
+        policies["NGM-HC-215511-R"].supersedes_policy_id = policies["NGM-HC-215511"].id
     db.flush()
 
     from ..services import claims as claim_svc  # local import: services need models loaded
@@ -438,6 +454,15 @@ def seed(db: Session, *, demo_dir: Path | None = None) -> dict:
     # checklist, coverage view and completeness for every seeded claim
     for cl in claims.values():
         claim_svc.refresh_claim_analysis(db, cl)
+
+    # a baseline coverage analysis for every demo customer, produced by the
+    # deterministic pipeline itself (nothing here is hand written), so the
+    # overview, the analysis workspace and the bank's aggregates have real
+    # pipeline output from the first start. Customers can rerun at any time.
+    from ..services import analysis as analysis_svc
+
+    for c in CUSTOMERS:
+        analysis_svc.run(db, users[c["key"]], mode="deterministic", language=c["locale"])
 
     # audit genesis entries
     audit.record(db, actor_type="system", actor_id=None, action="seed.demo_environment", details={"customers": len(CUSTOMERS), "staff": len(STAFF), "policies": len(policies), "claims": len(claims)}, commit=False)

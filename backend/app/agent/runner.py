@@ -131,7 +131,16 @@ def run_turn(db: Session, user: User, conversation: Conversation, text: str, *, 
     intent = classify(text, conv_ctx)
     language = language or (intent.language if intent.language == "zh" or (user.locale or "en") == "en" else user.locale) or "en"
     provider = get_provider()
-    run = AgentRun(user_id=user.id, conversation_id=conversation.id, intent=intent.name, workflow=INTENT_WORKFLOW.get(intent.name, "general"), provider=provider.name, model=getattr(provider, "model", None), prompt_version=PROMPT_VERSION, status="running", plan=[{"step": "classify", "intent": intent.name, "confidence": intent.confidence, "incident_type": intent.incident_type}])
+    consent_note = None
+    if provider.name != "deterministic":
+        # consent aware routing: an external model provider only sees this customer's
+        # questions and clause excerpts when they allow external processing
+        from ..services import bank as bank_svc
+
+        if not bank_svc.allowed(db, user.id, "external_model_processing"):
+            provider = DeterministicProvider()
+            consent_note = "external_model_processing not granted; offline planner used"
+    run = AgentRun(user_id=user.id, conversation_id=conversation.id, intent=intent.name, workflow=INTENT_WORKFLOW.get(intent.name, "general"), provider=provider.name, model=getattr(provider, "model", None), prompt_version=PROMPT_VERSION, status="running", plan=[{"step": "classify", "intent": intent.name, "confidence": intent.confidence, "incident_type": intent.incident_type}] + ([{"step": "consent", "note": consent_note}] if consent_note else []))
     db.add(run)
     db.flush()
     oplog = OperationLog(run.id, user_id=user.id, surface=surface, provider=provider.name, model=run.model, prompt_version=PROMPT_VERSION, intent=intent.name)

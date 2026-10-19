@@ -12,7 +12,9 @@ from sqlalchemy.orm import Session
 
 from .config import settings
 from .db import get_db
-from .models import Claim, ClaimStatus, Policy, Roles, User, UserSession
+from sqlalchemy import select
+
+from .models import Claim, ClaimStatus, Policy, RecordShare, Roles, User, UserSession
 from .security import csrf_matches, resolve_session
 
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
@@ -77,15 +79,43 @@ def require_insurer(p: Principal = Depends(get_principal)) -> Principal:
 def require_insurer_admin(p: Principal = Depends(get_principal)) -> Principal:
     if p.role != Roles.INSURER_ADMIN or not p.org_id:
         raise HTTPException(status_code=403, detail="Insurer administrator access only")
+    _require_mfa(p)
     return p
+
+
+def require_bank_admin(p: Principal = Depends(get_principal)) -> Principal:
+    if p.role != Roles.BANK_ADMIN or not p.org_id:
+        raise HTTPException(status_code=403, detail="Bank administrator access only")
+    _require_mfa(p)
+    return p
+
+
+def require_delegate_or_customer(p: Principal = Depends(get_principal)) -> Principal:
+    """Customers, household members and advisers: read access to records that
+    are theirs or explicitly shared with them (checked per record below)."""
+    if p.role not in {Roles.CUSTOMER, Roles.HOUSEHOLD_MEMBER, Roles.ADVISER}:
+        raise HTTPException(status_code=403, detail="Customer access only")
+    return p
+
+
+def _require_mfa(p: Principal) -> None:
+    if settings.mfa_required_for_privileged and p.role in Roles.PRIVILEGED and not p.session.mfa_passed:
+        raise HTTPException(status_code=403, detail="Multi factor authentication is required for this role; enrol under Settings")
+
+
+def _shared(db: Session, p: Principal, record_type: str, record_id: str, permission: str) -> bool:
+    if p.role not in {Roles.HOUSEHOLD_MEMBER, Roles.ADVISER, Roles.CUSTOMER}:
+        return False
+    row = db.execute(select(RecordShare).where(RecordShare.grantee_user_id == p.id, RecordShare.record_type == record_type, RecordShare.record_id == record_id, RecordShare.revoked_at.is_(None))).scalar_one_or_none()
+    return bool(row and permission in (row.permissions or []))
 
 
 # ------------------------------------------------------------ record scoping ---
 
 
-def customer_claim_or_404(db: Session, p: Principal, claim_id: str) -> Claim:
+def customer_claim_or_404(db: Session, p: Principal, claim_id: str, *, permission: str = "write") -> Claim:
     claim = db.get(Claim, claim_id)
-    if not claim or claim.user_id != p.id:
+    if not claim or (claim.user_id != p.id and not (permission == "view" and _shared(db, p, "claim", claim_id, "view"))):
         # 404 rather than 403 so that identifiers cannot be probed
         raise HTTPException(status_code=404, detail="Claim not found")
     return claim
@@ -98,9 +128,9 @@ def insurer_claim_or_404(db: Session, p: Principal, claim_id: str) -> Claim:
     return claim
 
 
-def customer_policy_or_404(db: Session, p: Principal, policy_id: str) -> Policy:
+def customer_policy_or_404(db: Session, p: Principal, policy_id: str, *, permission: str = "write") -> Policy:
     policy = db.get(Policy, policy_id)
-    if not policy or policy.user_id != p.id:
+    if not policy or (policy.user_id != p.id and not (permission == "view" and _shared(db, p, "policy", policy_id, "view"))):
         raise HTTPException(status_code=404, detail="Policy not found")
     return policy
 

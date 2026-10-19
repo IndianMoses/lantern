@@ -21,6 +21,7 @@ import QueuePage from "./insurer/Queue";
 import WorkspacePage from "./insurer/Workspace";
 import CustomersPage, { CustomerDetailPage, TeamPage } from "./insurer/Customers";
 import BankDashboard, { BankAuditPage, BankIntegrationPage } from "./bank/Dashboard";
+import { BankAccountPage, InsurerAccountPage } from "./pages/Account";
 
 type Surface = "customer" | "insurer" | "bank";
 
@@ -79,9 +80,11 @@ function App() {
         <Route path="/insurer/customers" element={<Guard surface="insurer"><CustomersPage /></Guard>} />
         <Route path="/insurer/customers/:id" element={<Guard surface="insurer"><CustomerDetailPage /></Guard>} />
         <Route path="/insurer/team" element={<Guard surface="insurer"><TeamPage /></Guard>} />
+        <Route path="/insurer/account" element={<Guard surface="insurer"><InsurerAccountPage /></Guard>} />
         <Route path="/bank" element={<Guard surface="bank"><BankDashboard /></Guard>} />
         <Route path="/bank/integration" element={<Guard surface="bank"><BankIntegrationPage /></Guard>} />
         <Route path="/bank/audit" element={<Guard surface="bank"><BankAuditPage /></Guard>} />
+        <Route path="/bank/account" element={<Guard surface="bank"><BankAccountPage /></Guard>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

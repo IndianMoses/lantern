@@ -213,7 +213,8 @@ export function InsurerShell(props: { children: ReactNode; title?: string; subti
     { to: "/insurer", label: t("operations"), icon: "grid" },
     { to: "/insurer/claims", label: t("queue"), icon: "list" },
     { to: "/insurer/customers", label: t("customers"), icon: "users" },
-    { to: "/insurer/team", label: t("team"), icon: "lock" },
+    { to: "/insurer/team", label: t("team"), icon: "users" },
+    { to: "/insurer/account", label: t("security"), icon: "lock" },
   ];
   const mobilePrimary: NavItem[] = nav.slice(0, 4);
   return <Shell {...props} nav={nav} mobilePrimary={mobilePrimary} surfaceLabel={t("insurer_surface")} homePath="/insurer" insurer />;
@@ -224,7 +225,8 @@ export function BankShell(props: { children: ReactNode; title?: string; subtitle
   const nav: NavItem[] = [
     { to: "/bank", label: t("operations"), icon: "bank" },
     { to: "/bank/integration", label: t("integration"), icon: "graph" },
-    { to: "/bank/audit", label: t("audit"), icon: "lock" },
+    { to: "/bank/audit", label: t("audit"), icon: "list" },
+    { to: "/bank/account", label: t("security"), icon: "lock" },
   ];
   return <Shell {...props} nav={nav} mobilePrimary={nav} surfaceLabel={t("bank_surface")} homePath="/bank" />;
 }

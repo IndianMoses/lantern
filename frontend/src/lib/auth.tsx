@@ -20,7 +20,9 @@ export const BANK_ROLES: Role[] = ["bank_admin"];
 interface AuthCtx {
   user: User | null;
   ready: boolean;
-  login: (email: string, password: string) => Promise<User>;
+  /** Resolves with the user, or with an MFA challenge when the account has TOTP enabled. */
+  login: (email: string, password: string) => Promise<LoginResult>;
+  verifyMfa: (challengeToken: string, code: string) => Promise<User>;
   register: (data: { email: string; password: string; full_name: string; locale: string; country: string }) => Promise<User>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -30,6 +32,7 @@ interface AuthCtx {
 const Ctx = createContext<AuthCtx>(null as unknown as AuthCtx);
 
 type MeResponse = { user: User; csrf_token: string };
+export type LoginResult = { user: User; mfa_required?: false } | { mfa_required: true; challenge_token: string; user: { email: string; full_name: string } };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -63,8 +66,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const login = useCallback(async (email: string, password: string) => {
-    const me = await api.post<MeResponse>("/api/auth/login", { email, password });
+  const login = useCallback(async (email: string, password: string): Promise<LoginResult> => {
+    const res = await api.post<MeResponse | { mfa_required: true; challenge_token: string; user: { email: string; full_name: string } }>("/api/auth/login", { email, password });
+    if ("mfa_required" in res && res.mfa_required) return res;
+    const me = res as MeResponse;
+    setCsrf(me.csrf_token);
+    setUser(me.user);
+    return { user: me.user };
+  }, []);
+
+  const verifyMfa = useCallback(async (challengeToken: string, code: string) => {
+    const me = await api.post<MeResponse>("/api/auth/mfa/verify", { challenge_token: challengeToken, code });
     setCsrf(me.csrf_token);
     setUser(me.user);
     return me.user;
@@ -91,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(me.user);
   }, []);
 
-  return <Ctx.Provider value={{ user, ready, login, register, logout, refresh, setLocale }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ user, ready, login, verifyMfa, register, logout, refresh, setLocale }}>{children}</Ctx.Provider>;
 }
 
 export function useAuth() {

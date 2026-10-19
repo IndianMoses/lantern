@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from .. import audit
 from ..db import get_db
-from ..deps import Principal, customer_claim_or_404, require_customer
+from ..deps import Principal, customer_claim_or_404, require_customer, require_delegate_or_customer
 from ..models import ClaimDecision, Communication, Document, InformationRequest, Organization, Policy, Submission, User
 from ..services import approvals as approval_svc
 from ..services import claim_pack as pack_svc
@@ -140,8 +140,8 @@ def create_claim(body: ClaimIn, p: Principal = Depends(require_customer), db: Se
 
 
 @router.get("/{claim_id}")
-def get_claim(claim_id: str, p: Principal = Depends(require_customer), db: Session = Depends(get_db)):
-    claim = customer_claim_or_404(db, p, claim_id)
+def get_claim(claim_id: str, p: Principal = Depends(require_delegate_or_customer), db: Session = Depends(get_db)):
+    claim = customer_claim_or_404(db, p, claim_id, permission="view")
     # mark inbound messages read
     now_read = False
     for c in db.execute(select(Communication).where(Communication.claim_id == claim.id, Communication.direction == "inbound", Communication.read_at.is_(None))).scalars():

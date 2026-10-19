@@ -133,6 +133,8 @@ class CustomerProfile(TimestampMixin, Base):
     concerns: Mapped[list] = mapped_column(JSON, default=list)
     preferences: Mapped[dict] = mapped_column(JSON, default=dict)  # notifications, language
     consents: Mapped[dict] = mapped_column(JSON, default=dict)
+    bank_org_id: Mapped[str | None] = mapped_column(ForeignKey("organizations.id"), index=True)  # the bank whose customer this is (aggregate analytics only)
+    bank_customer_ref: Mapped[str | None] = mapped_column(String(64))  # opaque reference from the bank's systems, never a real account number
 
     user: Mapped[User] = relationship(back_populates="profile")
 
@@ -629,6 +631,35 @@ class ConsentRecord(Base):
     granted: Mapped[bool] = mapped_column(Boolean, nullable=False)
     source: Mapped[str] = mapped_column(String(20), default="customer")  # customer | bank | default
     note: Mapped[str | None] = mapped_column(String(300))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
+
+
+class RecordShare(Base):
+    """Explicit, per record sharing: a customer grants a household member or
+    adviser view access to one policy or claim. Nothing is shared by default."""
+
+    __tablename__ = "record_shares"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    owner_user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    grantee_user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    record_type: Mapped[str] = mapped_column(String(20), nullable=False)  # policy | claim
+    record_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    permissions: Mapped[list] = mapped_column(JSON, default=lambda: ["view"])
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+
+class Feedback(Base):
+    """Customer satisfaction signal on an assistant answer (no free text stored
+    in analytics; only the rating is aggregated for the bank)."""
+
+    __tablename__ = "feedback"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    message_id: Mapped[str | None] = mapped_column(ForeignKey("messages.id"))
+    run_id: Mapped[str | None] = mapped_column(ForeignKey("agent_runs.id"))
+    rating: Mapped[int] = mapped_column(Integer, nullable=False)  # 1 helpful, -1 not helpful
+    comment: Mapped[str | None] = mapped_column(String(500))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
 
 

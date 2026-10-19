@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from .. import audit
 from ..db import get_db
-from ..deps import Principal, customer_policy_or_404, require_customer
+from ..deps import Principal, customer_policy_or_404, require_customer, require_delegate_or_customer
 from ..models import Claim, Organization, Policy, PolicyClause, PolicyStatus
 from ..services import policies as pol_svc
 from ..services.extraction import guess_metadata, segment_clauses
@@ -55,8 +55,8 @@ def match_insurer(db: Session, provider_name: str | None) -> Organization | None
 
 
 @router.get("/{policy_id}")
-def get_policy(policy_id: str, p: Principal = Depends(require_customer), db: Session = Depends(get_db)):
-    policy = customer_policy_or_404(db, p, policy_id)
+def get_policy(policy_id: str, p: Principal = Depends(require_delegate_or_customer), db: Session = Depends(get_db)):
+    policy = customer_policy_or_404(db, p, policy_id, permission="view")
     clauses = db.execute(select(PolicyClause).where(PolicyClause.policy_id == policy.id).order_by(PolicyClause.position)).scalars().all()
     org = db.get(Organization, policy.insurer_org_id) if policy.insurer_org_id else None
     claims = db.execute(select(Claim).where(Claim.policy_id == policy.id).order_by(Claim.created_at.desc())).scalars().all()

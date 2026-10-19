@@ -30,6 +30,8 @@ ADDED_COLUMNS: list[tuple[str, str, str]] = [
     ("gap_analyses", "mode", "VARCHAR(20)"),
     ("gap_analyses", "models", "JSON DEFAULT '{}'"),
     ("gap_analyses", "pipeline_version", "VARCHAR(20)"),
+    ("customer_profiles", "bank_org_id", "VARCHAR(36)"),
+    ("customer_profiles", "bank_customer_ref", "VARCHAR(64)"),
 ]
 
 
