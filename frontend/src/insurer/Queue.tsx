@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Icon } from "../components/Icons";
 import { InsurerShell } from "../components/Layout";
 import { Badge, Empty, Spinner, StatusBadge } from "../components/ui";
 import { api } from "../lib/api";
@@ -29,7 +30,7 @@ export default function QueuePage() {
     if (handler) qs.set("handler", handler);
     if (q) qs.set("q", q);
     api.get<{ claims: QueueRow[]; total: number; statuses: string[] }>(`/api/insurer/claims?${qs}`).then((r) => { setRows(r.claims); setTotal(r.total); setStatuses(r.statuses); });
-  }, [status, handler, q, sort, page]);
+  }, [status, handler, q, sort, page, lang]);
   const action = (a: string | null) => ({ acknowledge_and_assign: lang === "zh" ? "确认并分配" : "Acknowledge & assign", waiting_for_customer: lang === "zh" ? "等待客户" : "Waiting for customer", assess: lang === "zh" ? "评估" : "Assess", settle: lang === "zh" ? "结案赔付" : "Settle" } as Record<string, string>)[a || ""] || "—";
   const sortBtn = (k: string, label: string) => <button className="btn ghost sm" style={{ padding: 0, fontWeight: 600, color: sort.endsWith(k) ? "var(--accent-ink)" : undefined }} onClick={() => set("sort", sort === `-${k}` ? k : `-${k}`)}>{label} {sort === `-${k}` ? "↓" : sort === k ? "↑" : ""}</button>;
   return (
@@ -46,7 +47,7 @@ export default function QueuePage() {
           {team.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
       </div>
-      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+      <div className="card" style={{ padding: 0, overflow: "auto" }}>
         {!rows ? <div style={{ padding: 20 }}><Spinner /></div> : rows.length === 0 ? <Empty>—</Empty> : (
           <table className="table">
             <thead><tr><th>{sortBtn("reference", "Ref")}</th><th>{lang === "zh" ? "客户" : "Customer"}</th><th>{lang === "zh" ? "险种 / 事件" : "Product / incident"}</th><th>{sortBtn("incident_date", lang === "zh" ? "事件日期" : "Incident")}</th><th>{sortBtn("submitted_at", lang === "zh" ? "提交" : "Submitted")}</th><th>{sortBtn("status", lang === "zh" ? "状态" : "Status")}</th><th>{lang === "zh" ? "完整度" : "Pack"}</th><th>{lang === "zh" ? "理赔员" : "Handler"}</th><th>{sortBtn("priority", lang === "zh" ? "优先级" : "Priority")}</th><th>{lang === "zh" ? "下一步" : "Next action"}</th><th>{lang === "zh" ? "预计损失" : "Est. loss"}</th></tr></thead>
@@ -70,7 +71,7 @@ export default function QueuePage() {
           </table>
         )}
       </div>
-      {total > 25 && <div className="row" style={{ marginTop: 10 }}><button className="btn sm" disabled={page <= 1} onClick={() => set("page", String(page - 1))}>←</button><span className="small">{page} / {Math.ceil(total / 25)}</span><button className="btn sm" disabled={page * 25 >= total} onClick={() => set("page", String(page + 1))}>→</button></div>}
+      {total > 25 && <div className="row" style={{ marginTop: 10 }}><button className="btn sm icon" aria-label={lang === "zh" ? "上一页" : "Previous page"} disabled={page <= 1} onClick={() => set("page", String(page - 1))}><Icon name="arrowLeft" size={14} /></button><span className="small">{page} / {Math.ceil(total / 25)}</span><button className="btn sm icon" aria-label={lang === "zh" ? "下一页" : "Next page"} disabled={page * 25 >= total} onClick={() => set("page", String(page + 1))}><Icon name="arrowRight" size={14} /></button></div>}
     </InsurerShell>
   );
 }

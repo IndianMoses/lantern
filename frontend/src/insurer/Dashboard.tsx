@@ -26,7 +26,7 @@ export default function InsurerDashboard() {
   useEffect(() => {
     const q = new URLSearchParams(Object.entries(filters).filter(([, v]) => v));
     api.get<Dashboard>(`/api/insurer/dashboard?${q}`).then(setD);
-  }, [filters]);
+  }, [filters, lang]);
   if (!d) return <InsurerShell><Spinner /></InsurerShell>;
   const m = d.metrics;
   const tile = (key: string, label: string, fmt?: (v: number | null) => string) => {
@@ -65,7 +65,7 @@ export default function InsurerDashboard() {
       </div>
       <div className="card" style={{ marginBottom: 16 }}>
         <h3>{lang === "zh" ? "金额（分别统计，不合并）" : "Amounts (kept separate, never combined)"}</h3>
-        <div className="grid cols-4">
+        <div className="grid cols-2">
           {(["submitted", "approved", "settled", "outstanding"] as const).map((k) => (
             <div className="tile" key={k} title={m.amounts[k].definition}><div className="label">{k}</div><div className="value">{money(m.amounts[k].value, cur, lang)}</div><div className="sub">{m.amounts[k].definition}</div></div>
           ))}
@@ -74,11 +74,11 @@ export default function InsurerDashboard() {
       <div className="grid cols-2">
         <div className="card"><h3>{lang === "zh" ? "按状态" : "Claims by status"}</h3><BarChart data={d.charts.claims_by_status} horizontal /><div className="small muted">{lang === "zh" ? "点击队列中的状态筛选可下钻" : "Drill down from the queue filters"}</div></div>
         <div className="card"><h3>{lang === "zh" ? "每周接收" : "Claims received per week"}</h3><LineChart data={d.charts.claims_received_weekly} /></div>
-        <div className="card"><h3>{lang === "zh" ? "按险种" : "Claims by product"}</h3><BarChart data={d.charts.claims_by_type} color="#2b5aa6" /></div>
-        <div className="card"><h3>{lang === "zh" ? "理赔员工作量" : "Workload by handler"}</h3><BarChart data={d.charts.workload_by_handler.map((w) => ({ label: w.handler, count: w.open }))} horizontal color="#6b4fa0" /><div className="row small muted" style={{ gap: 12 }}>{d.charts.workload_by_handler.map((w) => <span key={w.handler} style={{ cursor: "pointer" }} onClick={() => nav(`/insurer/claims?handler=${w.handler_id || "unassigned"}`)}>{w.handler}: {w.open} {lang === "zh" ? "进行中" : "open"}{w.awaiting_customer ? ` (${w.awaiting_customer} ${lang === "zh" ? "待客户" : "awaiting customer"})` : ""}</span>)}</div></div>
-        <div className="card"><h3>{lang === "zh" ? "各险种平均处理天数" : "Average processing days by product"}</h3>{d.charts.avg_processing_days_by_type.length ? <BarChart data={d.charts.avg_processing_days_by_type} valueKey="days" color="#b7791f" /> : <div className="muted small">—</div>}</div>
+        <div className="card"><h3>{lang === "zh" ? "按险种" : "Claims by product"}</h3><BarChart data={d.charts.claims_by_type} color="var(--brand-700)" /></div>
+        <div className="card"><h3>{lang === "zh" ? "理赔员工作量" : "Workload by handler"}</h3><BarChart data={d.charts.workload_by_handler.map((w) => ({ label: w.handler, count: w.open }))} horizontal color="var(--brand-900)" /><div className="row small muted" style={{ gap: 12 }}>{d.charts.workload_by_handler.map((w) => <span key={w.handler} style={{ cursor: "pointer" }} onClick={() => nav(`/insurer/claims?handler=${w.handler_id || "unassigned"}`)}>{w.handler}: {w.open} {lang === "zh" ? "进行中" : "open"}{w.awaiting_customer ? ` (${w.awaiting_customer} ${lang === "zh" ? "待客户" : "awaiting customer"})` : ""}</span>)}</div></div>
+        <div className="card"><h3>{lang === "zh" ? "各险种平均处理天数" : "Average processing days by product"}</h3>{d.charts.avg_processing_days_by_type.length ? <BarChart data={d.charts.avg_processing_days_by_type} valueKey="days" color="var(--brand-700)" /> : <div className="muted small">—</div>}</div>
         <div className="card"><h3>{lang === "zh" ? "各月结论" : "Outcomes by month"}</h3>{d.charts.outcomes_by_month.length ? <StackedBars data={d.charts.outcomes_by_month} keys={["approved", "partially_approved", "declined"]} /> : <div className="muted small">—</div>}</div>
-        <div className="card"><h3>{lang === "zh" ? "文件处理" : "Document processing"}</h3><BarChart data={d.charts.document_processing.map((x) => ({ label: x.status, count: x.count }))} horizontal color="#2f7d4f" /></div>
+        <div className="card"><h3>{lang === "zh" ? "文件处理" : "Document processing"}</h3><BarChart data={d.charts.document_processing.map((x) => ({ label: x.status, count: x.count }))} horizontal color="var(--text-secondary)" /></div>
       </div>
       <div className="small muted" style={{ marginTop: 12 }}>{d.data_note} · {d.generated_at}</div>
     </InsurerShell>

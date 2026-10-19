@@ -1,15 +1,21 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { api, setCsrf } from "./api";
+import { api, onUnauthorized, setCsrf } from "./api";
+
+export type Role = "customer" | "household_member" | "adviser" | "insurer_handler" | "insurer_reviewer" | "insurer_admin" | "bank_admin" | "platform_admin";
 
 export interface User {
   id: string;
   email: string;
   full_name: string;
-  role: "customer" | "insurer_handler" | "insurer_admin" | "platform_admin";
+  role: Role;
   locale: "en" | "zh";
-  org: { id: string; code: string; name: string; name_zh?: string } | null;
+  org: { id: string; code: string; name: string; name_zh?: string; kind?: string } | null;
   is_demo: boolean;
+  mfa_enabled?: boolean;
 }
+
+export const INSURER_ROLES: Role[] = ["insurer_handler", "insurer_reviewer", "insurer_admin"];
+export const BANK_ROLES: Role[] = ["bank_admin"];
 
 interface AuthCtx {
   user: User | null;
@@ -45,6 +51,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  // An expired or revoked session: drop the user so guards redirect to the
+  // login page and no stale private data stays on screen.
+  useEffect(
+    () =>
+      onUnauthorized(() => {
+        setCsrf(null);
+        setUser((u) => (u ? null : u));
+      }),
+    [],
+  );
 
   const login = useCallback(async (email: string, password: string) => {
     const me = await api.post<MeResponse>("/api/auth/login", { email, password });

@@ -134,7 +134,8 @@ CUSTOMERS = [
         },
         "policies": [
             {"template": "pengcheng_ebike", "number": "PCAB-EB-2026-10377", "start": _d(-151), "end": _d(214), "premium": 268.0, "freq": "annual", "excess": 200.0},
-            {"template": "xinghe_phone", "number": "XHSM-PH-2026-88210", "start": _d(-78), "end": _d(287), "premium": 99.0, "freq": "annual", "excess": 0.0},
+            # recently started: inside a possible waiting period, which the gap analysis points out
+            {"template": "xinghe_phone", "number": "XHSM-PH-2026-88210", "start": _d(-9), "end": _d(356), "premium": 99.0, "freq": "annual", "excess": 0.0},
         ],
     },
     {
@@ -158,7 +159,9 @@ CUSTOMERS = [
         },
         "policies": [
             {"template": "rentsure", "number": "NGM-TC-118207", "start": _d(-186), "end": _d(179), "premium": 138.0, "freq": "annual", "excess": 100.0},
-            {"template": "pawfield_dog", "number": "PAW-DG-331002", "start": _d(-259), "end": _d(106), "premium": 372.0, "freq": "monthly", "excess": 99.0},
+            {"template": "pawfield_dog", "number": "PAW-DG-331002", "start": _d(-259), "end": _d(106), "premium": 31.0, "freq": "monthly", "excess": 99.0},
+            # uploaded by the customer for the Italy trip; extraction not yet confirmed, so not active
+            {"template": "meridian_single_trip", "number": "MER-ST-70311", "start": _d(41), "end": _d(52), "premium": 38.0, "freq": "annual", "excess": 75.0, "status": PolicyStatus.PENDING_REVIEW, "source": "uploaded", "confidence": 0.74},
         ],
     },
     {"key": "omar", "email": "omar.haddad@demo.example", "name": "Omar Haddad", "password": "omar-demo-2026", "locale": "en",
@@ -166,13 +169,17 @@ CUSTOMERS = [
      "policies": [{"template": "homesure", "number": "NGM-HC-209912", "start": _d(-300), "end": _d(65), "premium": 455.0, "freq": "annual", "excess": 250.0}]},
     {"key": "chloe", "email": "chloe.bennett@demo.example", "name": "Chloe Bennett", "password": "chloe-demo-2026", "locale": "en",
      "profile": {"country": "GB", "city": "Manchester", "currency": "GBP", "housing": "owner", "household": {"adults": 1, "children": 0}, "assets": [{"type": "contents", "label": "Contents", "value": 28000}], "activities": [], "concerns": [], "preferences": {"language": "en"}, "consents": {}},
-     "policies": [{"template": "homesure", "number": "NGM-HC-211305", "start": _d(-90), "end": _d(275), "premium": 398.0, "freq": "monthly", "excess": 250.0}]},
+     "policies": [{"template": "homesure", "number": "NGM-HC-211305", "start": _d(-90), "end": _d(275), "premium": 33.5, "freq": "monthly", "excess": 250.0}]},
     {"key": "dev", "email": "dev.patel@demo.example", "name": "Dev Patel", "password": "dev-demo-2026", "locale": "en",
      "profile": {"country": "GB", "city": "Birmingham", "currency": "GBP", "housing": "renter", "household": {"adults": 2, "children": 0}, "assets": [{"type": "contents", "label": "Contents", "value": 15000}, {"type": "laptop", "label": "Laptop", "value": 1300}], "activities": [], "concerns": [], "preferences": {"language": "en"}, "consents": {}},
-     "policies": [{"template": "rentsure", "number": "NGM-TC-120077", "start": _d(-140), "end": _d(225), "premium": 126.0, "freq": "annual", "excess": 100.0}]},
+     "policies": [{"template": "rentsure", "number": "NGM-TC-120077", "start": _d(-140), "end": _d(225), "premium": 126.0, "freq": "annual", "excess": 100.0},
+                  # six month gadget cover that starts in a fortnight (not yet in force)
+                  {"template": "xinghe_phone", "number": "XHSM-PH-2026-90455", "start": _d(14), "end": _d(196), "premium": 59.0, "freq": "annual", "excess": 0.0}]},
     {"key": "sofia", "email": "sofia.rossi@demo.example", "name": "Sofia Rossi", "password": "sofia-demo-2026", "locale": "en",
      "profile": {"country": "GB", "city": "Reading", "currency": "GBP", "housing": "owner", "household": {"adults": 2, "children": 1}, "assets": [{"type": "home", "label": "Terraced house", "value": 410000}, {"type": "contents", "label": "Contents", "value": 45000}], "activities": [], "concerns": [], "preferences": {"language": "en"}, "consents": {}},
-     "policies": [{"template": "homesure", "number": "NGM-HC-213840", "start": _d(-210), "end": _d(155), "premium": 489.0, "freq": "annual", "excess": 250.0}]},
+     "policies": [{"template": "homesure", "number": "NGM-HC-213840", "start": _d(-210), "end": _d(155), "premium": 489.0, "freq": "annual", "excess": 250.0},
+                  # a two week single trip policy that ended recently (different coverage period, recently expired)
+                  {"template": "meridian_single_trip", "number": "MER-ST-69002", "start": _d(-33), "end": _d(-19), "premium": 46.0, "freq": "annual", "excess": 75.0, "status": PolicyStatus.EXPIRED}]},
     {"key": "tomas", "email": "tomas.herrera@demo.example", "name": "Tomás Herrera", "password": "tomas-demo-2026", "locale": "en",
      "profile": {"country": "GB", "city": "Nottingham", "currency": "GBP", "housing": "owner", "household": {"adults": 2, "children": 0}, "assets": [{"type": "contents", "label": "Contents", "value": 30000}], "activities": [], "concerns": [], "preferences": {"language": "en"}, "consents": {}},
      "policies": [{"template": "homesure", "number": "NGM-HC-215511", "start": _d(-400), "end": _d(-35), "premium": 430.0, "freq": "annual", "excess": 250.0, "status": PolicyStatus.EXPIRED},
@@ -294,16 +301,16 @@ def seed(db: Session, *, demo_dir: Path | None = None) -> dict:
                 premium_frequency=p["freq"],
                 excess_amount=p["excess"],
                 status=p.get("status", PolicyStatus.ACTIVE),
-                source="seeded",
+                source=p.get("source", "seeded"),
                 insured_items=[],
                 summary=tpl["summary"],
-                extraction_confidence=1.0,
+                extraction_confidence=p.get("confidence", 1.0),
                 is_demo_data=True,
             )
             db.add(pol)
             db.flush()
             for i, cl in enumerate(tpl["clauses"]):
-                db.add(PolicyClause(policy_id=pol.id, clause_ref=cl["ref"], section=cl["section"], title=cl["title"], text=cl["text"], language=tpl["language"], kind=cl["kind"], tags=cl["tags"], amount=cl.get("amount"), position=i, page=1 + i // 6, confidence=1.0, translations=cl.get("translations", {})))
+                db.add(PolicyClause(policy_id=pol.id, clause_ref=cl["ref"], section=cl["section"], title=cl["title"], text=cl["text"], language=tpl["language"], kind=cl["kind"], tags=cl["tags"], amount=cl.get("amount"), position=i, page=1 + i // 6, confidence=p.get("confidence", 1.0), translations=cl.get("translations", {})))
             wpath, wtext = wording_files[p["template"]]
             doc = _doc(db, owner=u, path=wpath, doc_type="policy_wording", policy=pol, text=wtext)
             pol.document_id = doc.id

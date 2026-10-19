@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { InsurerShell } from "../components/Layout";
 import { Empty, Spinner, StatusBadge } from "../components/ui";
 import { api } from "../lib/api";
@@ -13,16 +13,17 @@ interface Row { id: string; name: string; email: string; locale: string; policie
 
 export default function CustomersPage() {
   const { lang } = useLang();
+  const nav = useNavigate();
   const [rows, setRows] = useState<Row[] | null>(null);
   const [q, setQ] = useState("");
-  useEffect(() => { api.get<{ customers: Row[] }>(`/api/insurer/customers${q ? `?q=${encodeURIComponent(q)}` : ""}`).then((r) => setRows(r.customers)); }, [q]);
+  useEffect(() => { api.get<{ customers: Row[] }>(`/api/insurer/customers${q ? `?q=${encodeURIComponent(q)}` : ""}`).then((r) => setRows(r.customers)); }, [q, lang]);
   return (
     <InsurerShell title={lang === "zh" ? "客户" : "Customers"} subtitle={lang === "zh" ? "仅显示与本公司有保单或理赔关系的客户。" : "Only customers with a policy or claim administered by this organisation."}>
       <input className="input" style={{ maxWidth: 320, marginBottom: 12 }} placeholder={lang === "zh" ? "搜索姓名或邮箱" : "Search name or email"} onKeyDown={(e) => e.key === "Enter" && setQ((e.target as HTMLInputElement).value)} />
       <div className="card" style={{ padding: 0 }}>
         {!rows ? <div style={{ padding: 20 }}><Spinner /></div> : rows.length === 0 ? <Empty>—</Empty> : (
           <table className="table"><thead><tr><th>{lang === "zh" ? "客户" : "Customer"}</th><th>{lang === "zh" ? "保单" : "Policies"}</th><th>{lang === "zh" ? "进行中理赔" : "Open claims"}</th><th>{lang === "zh" ? "下次续保" : "Next renewal"}</th></tr></thead>
-            <tbody>{rows.map((r) => <tr key={r.id} className="clickable" onClick={() => (window.location.href = `/insurer/customers/${r.id}`)}><td><Link to={`/insurer/customers/${r.id}`}>{r.name}</Link><div className="small muted">{r.email} · {r.locale}</div></td><td>{r.active_policies} / {r.policies}</td><td>{r.open_claims} / {r.claims}</td><td>{fmtDate(r.next_renewal, lang)}</td></tr>)}</tbody></table>
+            <tbody>{rows.map((r) => <tr key={r.id} className="clickable" onClick={() => nav(`/insurer/customers/${r.id}`)}><td><Link to={`/insurer/customers/${r.id}`} onClick={(e) => e.stopPropagation()}>{r.name}</Link><div className="small muted">{r.email} · {r.locale}</div></td><td>{r.active_policies} / {r.policies}</td><td>{r.open_claims} / {r.claims}</td><td>{fmtDate(r.next_renewal, lang)}</td></tr>)}</tbody></table>
         )}
       </div>
     </InsurerShell>
@@ -33,7 +34,7 @@ export function CustomerDetailPage() {
   const { id } = useParams();
   const { lang } = useLang();
   const [d, setD] = useState<{ customer: Row; policies: PolicyCard[]; claims: QueueRow[]; communications: { id: string; direction: string; subject: string; sent_at: string | null; claim_id: string | null }[] } | null>(null);
-  useEffect(() => { api.get<typeof d>(`/api/insurer/customers/${id}`).then(setD); }, [id]);
+  useEffect(() => { api.get<typeof d>(`/api/insurer/customers/${id}`).then(setD); }, [id, lang]);
   if (!d) return <InsurerShell><Spinner /></InsurerShell>;
   return (
     <InsurerShell title={d.customer.name} subtitle={d.customer.email}>
@@ -66,7 +67,7 @@ export function TeamPage() {
           <h3>{lang === "zh" ? "审计日志（哈希链）" : "Audit log (hash chained)"}</h3>
           {user?.role !== "insurer_admin" ? <div className="alert info small">{lang === "zh" ? "仅管理员可查看完整审计日志。" : "Only organisation administrators can view the full audit log."}</div> : !audit ? (err ? <div className="alert bad">{err}</div> : <Spinner />) : (
             <>
-              <div className={`alert ${audit.chain.ok ? "ok" : "bad"} small`}>{audit.chain.ok ? `✓ ${lang === "zh" ? "链完整" : "Chain verified"} · ${audit.chain.checked} ${lang === "zh" ? "条记录" : "events"} · head ${audit.chain.head?.slice(0, 16)}…` : `✗ ${lang === "zh" ? "链被破坏" : "Chain broken"}`}</div>
+              <div className={`alert ${audit.chain.ok ? "ok" : "bad"} small`}>{audit.chain.ok ? `${lang === "zh" ? "链完整" : "Chain verified"} · ${audit.chain.checked} ${lang === "zh" ? "条记录" : "events"} · head ${audit.chain.head?.slice(0, 16)}…` : `${lang === "zh" ? "链被破坏" : "Chain broken"}`}</div>
               <div style={{ maxHeight: 520, overflow: "auto", marginTop: 8 }}>
                 <table className="table"><tbody>{audit.events.map((a) => <tr key={a.seq}><td className="mono small">#{a.seq}</td><td className="small">{a.action}<div className="muted">{a.actor_type} · {a.target_type || ""} · {a.outcome}</div></td><td className="small muted">{fmtDateTime(a.created_at, lang)}<div className="mono">{a.hash.slice(0, 16)}</div></td></tr>)}</tbody></table>
               </div>

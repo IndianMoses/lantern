@@ -132,7 +132,7 @@ def list_tools(p: Principal = Depends(get_principal)):
 
 @router.get("/suggestions")
 def suggestions(p: Principal = Depends(get_principal)):
-    lang = p.user.locale or "en"
+    lang = p.lang
     if p.user.is_insurer:
         return {"suggestions": ["Summarise this claim", "What is missing from the pack?", "Draft a request for the missing documents", "Which clauses bear on this incident?"] if lang != "zh" else ["总结这个案件", "材料包还缺什么？", "起草补充材料请求", "哪些条款与本次事故相关？"]}
     if lang == "zh":

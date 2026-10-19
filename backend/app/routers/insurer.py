@@ -146,10 +146,10 @@ def dashboard(date_from: date | None = None, date_to: date | None = None, insura
             "claim_frequency": {"value": round(len([c for c in claims if c.submitted_at]) / max(1, len(policies)), 3), "definition": "Submitted claims per policy managed"},
         },
         "charts": {
-            "claims_by_status": [{"status": s, "label": claim_svc.STATUS_LABELS.get(s, {}).get(p.user.locale or "en", s), "count": n} for s, n in sorted(by_status.items(), key=lambda kv: -kv[1])],
-            "claims_by_type": [{"type": t, "label": insurance_label(t, p.user.locale or "en"), "count": n} for t, n in by_type.items()],
+            "claims_by_status": [{"status": s, "label": claim_svc.STATUS_LABELS.get(s, {}).get(p.lang, s), "count": n} for s, n in sorted(by_status.items(), key=lambda kv: -kv[1])],
+            "claims_by_type": [{"type": t, "label": insurance_label(t, p.lang), "count": n} for t, n in by_type.items()],
             "claims_received_weekly": received_series,
-            "avg_processing_days_by_type": [{"type": t, "label": insurance_label(t, p.user.locale or "en"), "days": round(sum(v) / len(v), 1), "n": len(v)} for t, v in proc_by_type.items()],
+            "avg_processing_days_by_type": [{"type": t, "label": insurance_label(t, p.lang), "days": round(sum(v) / len(v), 1), "n": len(v)} for t, v in proc_by_type.items()],
             "outcomes_by_month": [{"month": m, **dict(cnt)} for m, cnt in sorted(outcomes_by_month.items())],
             "workload_by_handler": workload,
             "document_processing": [{"status": s, "count": n} for s, n in doc_outcomes.items()] + [{"status": "instruction_flags", "count": flagged_docs}],
@@ -180,13 +180,13 @@ def queue(status: str | None = None, insurance_type: str | None = None, handler:
     total = db.execute(select(func.count()).select_from(query.subquery())).scalar_one()
     rows = db.execute(query.offset((page - 1) * page_size).limit(page_size)).scalars().all()
     names = _names(db, {c.user_id for c in rows} | {c.assigned_handler_id for c in rows if c.assigned_handler_id})
-    return {"claims": [queue_row(db, c, p.user.locale or "en", names) for c in rows], "total": total, "page": page, "page_size": page_size, "statuses": sorted(claim_svc.STATUS_LABELS.keys())}
+    return {"claims": [queue_row(db, c, p.lang, names) for c in rows], "total": total, "page": page, "page_size": page_size, "statuses": sorted(claim_svc.STATUS_LABELS.keys())}
 
 
 @router.get("/claims/{claim_id}")
 def workspace(claim_id: str, p: Principal = Depends(require_insurer), db: Session = Depends(get_db)):
     c = insurer_claim_or_404(db, p, claim_id)
-    lang = p.user.locale or "en"
+    lang = p.lang
     customer = db.get(User, c.user_id)
     policy = db.get(Policy, c.policy_id) if c.policy_id else None
     clauses = db.execute(select(PolicyClause).where(PolicyClause.policy_id == policy.id).order_by(PolicyClause.position)).scalars().all() if policy else []
@@ -348,8 +348,8 @@ def customer_detail(customer_id: str, p: Principal = Depends(require_insurer), d
     comms = db.execute(select(Communication).where(Communication.insurer_org_id == p.org_id, Communication.user_id == customer_id, Communication.status.in_(["sent", "received"])).order_by(Communication.created_at.desc()).limit(20)).scalars().all()
     return {
         "customer": {"id": u.id, "name": u.full_name, "email": u.email, "locale": u.locale},
-        "policies": [pol_svc.policy_card(x, p.user.locale or "en") for x in pols],
-        "claims": [queue_row(db, c, p.user.locale or "en", names) for c in claims],
+        "policies": [pol_svc.policy_card(x, p.lang) for x in pols],
+        "claims": [queue_row(db, c, p.lang, names) for c in claims],
         "communications": [{"id": m.id, "direction": m.direction, "subject": m.subject, "sent_at": m.sent_at.isoformat() if m.sent_at else None, "claim_id": m.claim_id} for m in comms],
     }
 
@@ -358,7 +358,7 @@ def customer_detail(customer_id: str, p: Principal = Depends(require_insurer), d
 def org_policies(p: Principal = Depends(require_insurer), db: Session = Depends(get_db)):
     pols = db.execute(select(Policy).where(Policy.insurer_org_id == p.org_id).order_by(Policy.end_date)).scalars().all()
     names = _names(db, {x.user_id for x in pols})
-    return {"policies": [pol_svc.policy_card(x, p.user.locale or "en") | {"customer": {"id": x.user_id, "name": names.get(x.user_id)}} for x in pols]}
+    return {"policies": [pol_svc.policy_card(x, p.lang) | {"customer": {"id": x.user_id, "name": names.get(x.user_id)}} for x in pols]}
 
 
 @router.get("/team")

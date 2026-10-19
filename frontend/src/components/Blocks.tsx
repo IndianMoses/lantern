@@ -4,6 +4,7 @@ import { api, errorMessage } from "../lib/api";
 import { fmtDateTime, money, VERDICT_LABEL } from "../lib/format";
 import { useLang } from "../lib/i18n";
 import { CitationChip, RichText, type ClauseRef } from "./Markdown";
+import { Icon } from "./Icons";
 import { Badge, Meter, StatusBadge, useToast } from "./ui";
 
 // ------------------------------------------------------------------ types
@@ -74,7 +75,7 @@ export function Checklist({ items, onUpload, compact }: { items: ChecklistItem[]
     <ul className="checklist" style={{ listStyle: "none", margin: 0, padding: 0 }}>
       {shown.map((i) => (
         <li key={i.key}>
-          <span className={`tick ${i.satisfied ? "done" : ""}`}>{i.satisfied ? "✓" : ""}</span>
+          <span className={`tick ${i.satisfied ? "done" : ""}`}>{i.satisfied ? <Icon name="check" size={12} /> : ""}</span>
           <div>
             <div className="row" style={{ gap: 8 }}>
               <strong>{pick(i.label)}</strong>
@@ -85,7 +86,7 @@ export function Checklist({ items, onUpload, compact }: { items: ChecklistItem[]
               ))}
             </div>
             <button className="btn ghost sm" style={{ padding: "2px 0" }} onClick={() => setOpen(open === i.key ? null : i.key)}>
-              {open === i.key ? "−" : "+"} {t("why_needed")} · {t("how_to_get")}
+              <Icon name={open === i.key ? "minus" : "plus"} size={13} /> {t("why_needed")} · {t("how_to_get")}
             </button>
             {open === i.key && (
               <div className="small" style={{ color: "var(--ink-2)", marginTop: 4 }}>
@@ -270,7 +271,7 @@ export function MessageBlocks({ blocks, onApprovalDone }: { blocks: Record<strin
     else if (type === "checklist")
       nodes.push(
         <div className="block" key={i}>
-          <div className="row between"><h4>{t("checklist")}</h4><Link className="small" to={`/claims/${b.claim_id as string}`}>{lang === "zh" ? "打开理赔页面 →" : "Open the claim →"}</Link></div>
+          <div className="row between"><h4>{t("checklist")}</h4><Link className="small" to={`/claims/${b.claim_id as string}`}>{lang === "zh" ? "打开理赔页面" : "Open the claim"} <Icon name="arrowRight" size={13} /></Link></div>
           <Checklist items={b.items as ChecklistItem[]} compact />
           {b.completeness ? <div style={{ marginTop: 10 }}><CompletenessPanel c={b.completeness as Completeness} /></div> : null}
         </div>,
@@ -290,7 +291,7 @@ export function MessageBlocks({ blocks, onApprovalDone }: { blocks: Record<strin
     else if (type === "gap_findings")
       nodes.push(
         <div className="block" key={i}>
-          <div className="row between"><h4>{t("gaps")}</h4><Link className="small" to="/gaps">{lang === "zh" ? "查看全部 →" : "See all →"}</Link></div>
+          <div className="row between"><h4>{t("gaps")}</h4><Link className="small" to="/gaps">{lang === "zh" ? "查看全部" : "See all"} <Icon name="arrowRight" size={13} /></Link></div>
           <GapFindings findings={b.findings as Finding[]} />
         </div>,
       );

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { STATUS_TONE, humanize } from "../lib/format";
+import { Icon } from "./Icons";
 
 export function Badge({ tone, children, plain }: { tone?: string; children: ReactNode; plain?: boolean }) {
   return <span className={`badge ${tone || ""} ${plain ? "plain" : ""}`}>{children}</span>;
@@ -36,7 +37,7 @@ export function Modal({ title, children, onClose, wide }: { title: string; child
       <div className="modal" style={wide ? { maxWidth: 960 } : undefined} role="dialog" aria-modal="true" aria-label={title}>
         <div className="row between" style={{ marginBottom: 12 }}>
           <h2>{title}</h2>
-          <button className="btn sm" onClick={onClose} aria-label="Close">✕</button>
+          <button className="btn sm icon" onClick={onClose} aria-label="Close"><Icon name="x" /></button>
         </div>
         {children}
       </div>
@@ -56,7 +57,7 @@ export function Drawer({ title, children, onClose }: { title: string; children: 
       <aside className="drawer" role="dialog" aria-label={title}>
         <div className="row between" style={{ marginBottom: 12 }}>
           <h3>{title}</h3>
-          <button className="btn sm" onClick={onClose} aria-label="Close">✕</button>
+          <button className="btn sm icon" onClick={onClose} aria-label="Close"><Icon name="x" /></button>
         </div>
         {children}
       </aside>

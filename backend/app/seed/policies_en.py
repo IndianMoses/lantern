@@ -231,6 +231,47 @@ MERIDIAN_TRAVEL = {
     ],
 }
 
+MERIDIAN_SINGLE_TRIP = {
+    "code": "meridian_single_trip",
+    "provider": "Meridian Travel Cover",
+    "org_code": "meridian",
+    "product": "Single Trip Europe",
+    "insurance_type": "travel",
+    "language": "en",
+    "country": "GB",
+    "currency": "GBP",
+    "summary": {
+        "area": "Europe (excluding the United Kingdom)",
+        "max_trip_days": 17,
+        "excess": 75,
+        "medical_limit": 5000000,
+        "cancellation_limit": 2000,
+        "baggage_limit": 1000,
+        "key_limits": ["Baggage single item £200", "Valuables £250", "Cancellation £2,000", "Personal liability £1,000,000"],
+        "key_exclusions": ["Outside Europe", "Trips over 17 days", "Gadgets", "Undeclared pre existing medical conditions"],
+    },
+    "clauses": [
+        {"ref": "1.1", "section": "Section 1 Definitions", "title": "Area of cover and trip dates", "kind": "condition", "tags": ["geographic_scope", "europe", "time_limit", "max_trip"], "amount": 17,
+         "text": "This policy covers one trip to the countries of Europe shown in your schedule, starting and ending in the United Kingdom on the dates shown. There is no cover outside the period of insurance or outside Europe. The trip must not exceed 17 days."},
+        {"ref": "2.1", "section": "Section 2 Emergency medical expenses", "title": "Emergency medical and repatriation", "kind": "coverage", "tags": ["medical", "illness", "injury", "repatriation", "emergency"], "amount": 5000000,
+         "text": "We will pay up to £5,000,000 for necessary emergency medical, surgical and hospital treatment outside the United Kingdom following your injury or illness during the trip, and repatriation where our assistance team considers it necessary. Contact the 24 hour assistance line before any inpatient treatment."},
+        {"ref": "2.2", "section": "Section 2 Emergency medical expenses", "title": "Medical exclusions", "kind": "exclusion", "tags": ["pre_existing", "medical", "alcohol", "hazardous_activities", "exclusion"], "amount": None,
+         "text": "We will not pay for any medical condition you had before buying this policy unless it was declared and accepted in writing, treatment that could reasonably have waited until your return, or claims resulting from alcohol or drug use."},
+        {"ref": "3.1", "section": "Section 3 Cancellation", "title": "Cancellation and curtailment", "kind": "coverage", "tags": ["cancellation", "curtailment", "illness", "redundancy"], "amount": 2000,
+         "text": "We will pay up to £2,000 per person for irrecoverable deposits and travel costs if you have to cancel or cut short the trip because of your unexpected illness, injury or death, or that of a travelling companion or close relative, or your compulsory redundancy."},
+        {"ref": "4.1", "section": "Section 4 Baggage", "title": "Baggage and personal possessions", "kind": "coverage", "tags": ["baggage", "theft", "loss", "accidental_damage", "personal_possessions", "single_item_limit", "valuables"], "amount": 1000,
+         "text": "We will pay up to £1,000 per person for loss, theft or damage to baggage during the trip. The most we will pay for any single item, pair or set is £200, and for all valuables £250."},
+        {"ref": "4.2", "section": "Section 4 Baggage", "title": "Baggage exclusions and gadgets", "kind": "exclusion", "tags": ["baggage", "phone", "laptop", "gadget", "unattended", "police_report", "exclusion"], "amount": None,
+         "text": "We will not pay for mobile phones, laptops, tablets or other electronic gadgets, items left unattended, or loss or theft not reported to the police or carrier within 24 hours with a written report obtained."},
+        {"ref": "5.1", "section": "Section 5 Personal liability", "title": "Personal liability", "kind": "coverage", "tags": ["liability", "third_party", "injury", "property_damage"], "amount": 1000000,
+         "text": "We will pay up to £1,000,000 for amounts you are legally liable to pay for accidental injury to any person or accidental damage to property during the trip, excluding liability arising from motor vehicles, your employment or property you own."},
+        {"ref": "6.1", "section": "Section 6 General conditions", "title": "Claims conditions", "kind": "claims_procedure", "tags": ["claims_procedure", "time_limit", "police_report", "receipt_required", "medical_report"], "amount": None,
+         "text": "Claims must be notified within 31 days of returning home with original receipts or proof of ownership, a written police or carrier report for loss or theft, and medical reports and itemised invoices for medical claims."},
+        {"ref": "6.2", "section": "Section 6 General conditions", "title": "Excess", "kind": "limit", "tags": ["excess"], "amount": 75,
+         "text": "An excess of £75 per person applies to each section for each incident."},
+    ],
+}
+
 HARBOURLINE_PACKAGED = {
     "code": "harbourline_packaged",
     "provider": "Harbourline Bank (underwritten by Castlebay Underwriting)",
@@ -322,4 +363,4 @@ PAWFIELD_DOG = {
     ],
 }
 
-TEMPLATES_EN = {t["code"]: t for t in [HOMESURE, RENTSURE, DRIVECOVER, MERIDIAN_TRAVEL, HARBOURLINE_PACKAGED, PAWFIELD_DOG]}
+TEMPLATES_EN = {t["code"]: t for t in [HOMESURE, RENTSURE, DRIVECOVER, MERIDIAN_TRAVEL, MERIDIAN_SINGLE_TRIP, HARBOURLINE_PACKAGED, PAWFIELD_DOG]}

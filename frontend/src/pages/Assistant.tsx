@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { MessageBlocks } from "../components/Blocks";
+import { Icon } from "../components/Icons";
 import { CustomerShell } from "../components/Layout";
 import { CitationProvider, Markdown, type ClauseRef } from "../components/Markdown";
 import { Badge, Modal, Spinner, useToast } from "../components/ui";
@@ -34,7 +35,7 @@ export function RunTransparency({ run, lang }: { run: Run; lang: string }) {
         <Badge plain>intent: {run.intent}</Badge>
         <Badge plain>{run.provider}{run.model ? ` · ${run.model}` : ""}</Badge>
         <Badge plain>prompt {run.prompt_version}</Badge>
-        <Badge tone={g.citations_unverified ? "bad" : "ok"} plain>{lang === "zh" ? "引用核实" : "citations"}: {g.citations_valid ?? 0} ✓ {g.citations_unverified ? `${g.citations_unverified} ✗` : ""}</Badge>
+        <Badge tone={g.citations_unverified ? "bad" : "ok"} plain>{lang === "zh" ? "引用核实" : "citations"}: {g.citations_valid ?? 0} {lang === "zh" ? "已核实" : "verified"}{g.citations_unverified ? ` · ${g.citations_unverified} ${lang === "zh" ? "未核实" : "unverified"}` : ""}</Badge>
       </div>
       {run.tool_executions.length > 0 && (
         <table className="table">
@@ -48,7 +49,7 @@ export function RunTransparency({ run, lang }: { run: Run; lang: string }) {
       )}
       <div className="row small muted">
         <span>{lang === "zh" ? "层级 0 读取 · 1 准备 · 2 需你批准 · 3 仅限人工" : "Tier 0 read · 1 prepare · 2 needs your approval · 3 humans only"}</span>
-        <a href={`/api/assistant/runs/${run.id}/log`} target="_blank" rel="noreferrer">{lang === "zh" ? "操作日志" : "operation log"} ↗</a>
+        <a href={`/api/assistant/runs/${run.id}/log`} target="_blank" rel="noreferrer">{lang === "zh" ? "操作日志" : "operation log"} <Icon name="external" size={12} /></a>
       </div>
     </div>
   );
@@ -178,7 +179,7 @@ export default function AssistantPage() {
                     <>
                       <div style={{ whiteSpace: "pre-wrap" }}>{m.content}</div>
                       {m.blocks?.some((b) => b.type === "attachments") && (
-                        <div className="small muted">📎 {((m.blocks.find((b) => b.type === "attachments") as { documents: { filename: string }[] }).documents || []).map((d) => d.filename).join(", ")}</div>
+                        <div className="small muted"><Icon name="paperclip" size={13} /> {((m.blocks.find((b) => b.type === "attachments") as { documents: { filename: string }[] }).documents || []).map((d) => d.filename).join(", ")}</div>
                       )}
                     </>
                   ) : (
@@ -191,7 +192,7 @@ export default function AssistantPage() {
                         <span>{fmtDateTime(m.created_at, lang)}</span>
                         {m.run_id && (
                           <button className="btn ghost sm" style={{ padding: 0 }} onClick={async () => { if (!runs[m.run_id!]) { const r = await api.get<{ run: Run }>(`/api/assistant/runs/${m.run_id}`); setRuns((rs) => ({ ...rs, [m.run_id!]: r.run })); } setShowRun(showRun === m.run_id ? null : m.run_id); }}>
-                            {t("why_this_answer")} {showRun === m.run_id ? "▴" : "▾"}
+                            {t("why_this_answer")} <Icon name={showRun === m.run_id ? "chevronUp" : "chevronDown"} size={13} />
                           </button>
                         )}
                       </div>
@@ -207,10 +208,10 @@ export default function AssistantPage() {
               {messages.length < 2 && suggestions.length > 0 && (
                 <div className="suggestions">{suggestions.map((s) => <button key={s} onClick={() => send(s)}>{s}</button>)}</div>
               )}
-              {attachments.length > 0 && <div className="row small">📎 {attachments.map((a) => <Badge key={a.id} plain>{a.filename} <button className="btn ghost sm" style={{ padding: 0 }} onClick={() => setAttachments((x) => x.filter((y) => y.id !== a.id))}>✕</button></Badge>)}</div>}
+              {attachments.length > 0 && <div className="row small"><Icon name="paperclip" size={13} /> {attachments.map((a) => <Badge key={a.id} plain>{a.filename} <button className="btn ghost sm" style={{ padding: 0, minHeight: 0 }} aria-label={t("close")} onClick={() => setAttachments((x) => x.filter((y) => y.id !== a.id))}><Icon name="x" size={12} /></button></Badge>)}</div>}
               <textarea className="textarea" placeholder={t("ask_placeholder")} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
               <div className="row between">
-                <div className="row"><button className="btn sm" onClick={openAttach}>📎 {t("attach")}</button>{ctxNote && <span className="small muted">{ctxNote}</span>}</div>
+                <div className="row"><button className="btn sm" onClick={openAttach}><Icon name="paperclip" size={14} /> {t("attach")}</button>{ctxNote && <span className="small muted">{ctxNote}</span>}</div>
                 <button className="btn primary" disabled={busy || !text.trim()} onClick={() => send()}>{t("send")}</button>
               </div>
             </div>
@@ -241,14 +242,20 @@ export default function AssistantPage() {
       {attachOpen && (
         <Modal title={t("attach")} onClose={() => setAttachOpen(false)}>
           <div className="stack">
-            <label className="btn primary" style={{ alignSelf: "flex-start" }}>
-              {t("upload")}
-              <input type="file" style={{ display: "none" }} accept=".pdf,.txt,.md,.png,.jpg,.jpeg,.webp" onChange={(e) => e.target.files?.[0] && uploadAttach(e.target.files[0])} />
-            </label>
+            <div className="row">
+              <label className="btn primary">
+                <Icon name="upload" size={16} />{t("upload")}
+                <input type="file" style={{ display: "none" }} accept=".pdf,.txt,.md,.png,.jpg,.jpeg,.webp" onChange={(e) => e.target.files?.[0] && uploadAttach(e.target.files[0])} />
+              </label>
+              <label className="btn">
+                <Icon name="camera" size={16} />{t("take_photo")}
+                <input type="file" style={{ display: "none" }} accept="image/*" capture="environment" onChange={(e) => e.target.files?.[0] && uploadAttach(e.target.files[0])} />
+              </label>
+            </div>
             <div className="small muted">{lang === "zh" ? "或选择已上传的文件：" : "Or pick an existing document:"}</div>
             {docs.map((d) => (
               <button key={d.id} className="btn" style={{ justifyContent: "space-between" }} onClick={() => { setAttachments((a) => [...a, { id: d.id, filename: d.filename }]); setAttachOpen(false); }}>
-                <span>{d.filename}</span><span className="small muted">{d.doc_type}{d.injection_flags?.length ? " ⚠" : ""}</span>
+                <span>{d.filename}</span><span className="small muted">{d.doc_type}{d.injection_flags?.length ? <Icon name="warning" size={13} /> : null}</span>
               </button>
             ))}
           </div>

@@ -14,7 +14,7 @@ export default function MessagesPage() {
   const [comms, setComms] = useState<Comm[] | null>(null);
   const [tab, setTab] = useState<"inbox" | "sent" | "drafts">("inbox");
   const load = () => api.get<{ communications: Comm[] }>("/api/communications").then((r) => setComms(r.communications));
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [lang]);
   const list = (comms || []).filter((c) => (tab === "inbox" ? c.direction === "inbound" : tab === "sent" ? c.direction === "outbound" && c.status === "sent" : c.status === "draft"));
   return (
     <CustomerShell title={t("messages")} subtitle={lang === "zh" ? "与保险公司的往来，均关联到具体理赔或保单。" : "Everything exchanged with insurers, each linked to a claim or policy."}>

@@ -9,22 +9,36 @@ export class ApiError extends Error {
 }
 
 let csrfToken: string | null = null;
+let apiLang = "en";
 export function setCsrf(token: string | null) {
   csrfToken = token;
 }
 export function getCsrf(): string | null {
   return csrfToken;
 }
+/** The active interface language, sent as X-Lang so server rendered labels match. */
+export function setApiLang(lang: string) {
+  apiLang = lang;
+}
+
+/** Called when the server says the session is gone; the auth provider subscribes. */
+const unauthorizedListeners = new Set<() => void>();
+export function onUnauthorized(fn: () => void): () => void {
+  unauthorizedListeners.add(fn);
+  return () => unauthorizedListeners.delete(fn);
+}
 
 /** POST that returns a file (blob) rather than JSON. */
 export async function postBlob(url: string): Promise<Blob> {
-  const res = await fetch(url, { method: "POST", headers: csrfToken ? { "X-CSRF-Token": csrfToken } : {}, credentials: "same-origin" });
+  const headers: Record<string, string> = { "X-Lang": apiLang };
+  if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
+  const res = await fetch(url, { method: "POST", headers, credentials: "same-origin" });
   if (!res.ok) throw new ApiError(res.status, (await res.text()) || res.statusText);
   return res.blob();
 }
 
 async function request<T>(method: string, url: string, body?: unknown, opts: { form?: FormData } = {}): Promise<T> {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { "X-Lang": apiLang };
   if (csrfToken && method !== "GET") headers["X-CSRF-Token"] = csrfToken;
   let payload: BodyInit | undefined;
   if (opts.form) payload = opts.form;
@@ -36,6 +50,7 @@ async function request<T>(method: string, url: string, body?: unknown, opts: { f
   if (res.status === 204) return undefined as T;
   const ct = res.headers.get("content-type") || "";
   const data = ct.includes("application/json") ? await res.json() : await res.text();
+  if (res.status === 401 && !url.startsWith("/api/auth/")) unauthorizedListeners.forEach((fn) => fn());
   if (!res.ok) throw new ApiError(res.status, (data && (data as { detail?: unknown }).detail) || data || res.statusText);
   return data as T;
 }

@@ -78,7 +78,7 @@ def upload_document(file: UploadFile = File(...), doc_type: str = Form("other"),
     if claim:
         claim_svc.attach_document(db, claim, doc, checklist_item_key, actor_type="customer", actor_id=p.id)
     db.commit()
-    return {"document": doc_out(doc), "claim": (pol_svc.claim_summary(claim, p.user.locale) | {"checklist": claim.checklist, "completeness": claim.completeness}) if claim else None}
+    return {"document": doc_out(doc), "claim": (pol_svc.claim_summary(claim, p.lang) | {"checklist": claim.checklist, "completeness": claim.completeness}) if claim else None}
 
 
 @router.get("/{document_id}")

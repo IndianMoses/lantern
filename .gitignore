@@ -15,3 +15,4 @@ frontend/dist/
 .env
 *.log
 .DS_Store
+scripts/node_modules

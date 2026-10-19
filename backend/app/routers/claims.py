@@ -53,8 +53,8 @@ class ClaimPatch(BaseModel):
     fields: dict[str, Any]
 
 
-def claim_detail(db: Session, claim, user: User) -> dict:
-    lang = user.locale or "en"
+def claim_detail(db: Session, claim, user: User, lang: str | None = None) -> dict:
+    lang = lang or user.locale or "en"
     policy = db.get(Policy, claim.policy_id) if claim.policy_id else None
     org = db.get(Organization, claim.insurer_org_id) if claim.insurer_org_id else None
     docs = claim_svc.claim_documents(db, claim)
@@ -92,7 +92,7 @@ def list_claims(p: Principal = Depends(require_customer), db: Session = Depends(
     from ..models import Claim
 
     claims = db.execute(select(Claim).where(Claim.user_id == p.id).order_by(Claim.updated_at.desc())).scalars().all()
-    return {"claims": [pol_svc.claim_summary(c, p.user.locale) | {"description": c.description[:200], "location": c.location} for c in claims]}
+    return {"claims": [pol_svc.claim_summary(c, p.lang) | {"description": c.description[:200], "location": c.location} for c in claims]}
 
 
 @router.get("/incident-types")
@@ -134,7 +134,7 @@ def create_claim(body: ClaimIn, p: Principal = Depends(require_customer), db: Se
     except PermissionError:
         raise HTTPException(status_code=404, detail="Policy not found")
     db.commit()
-    return claim_detail(db, claim, p.user)
+    return claim_detail(db, claim, p.user, p.lang)
 
 
 @router.get("/{claim_id}")
@@ -149,7 +149,7 @@ def get_claim(claim_id: str, p: Principal = Depends(require_customer), db: Sessi
         now_read = True
     if now_read:
         db.commit()
-    return claim_detail(db, claim, p.user)
+    return claim_detail(db, claim, p.user, p.lang)
 
 
 @router.patch("/{claim_id}")
@@ -167,7 +167,7 @@ def update_claim(claim_id: str, body: ClaimPatch, p: Principal = Depends(require
     except PermissionError:
         raise HTTPException(status_code=404, detail="Policy not found")
     db.commit()
-    return claim_detail(db, claim, p.user)
+    return claim_detail(db, claim, p.user, p.lang)
 
 
 @router.post("/{claim_id}/refresh")
@@ -175,7 +175,7 @@ def refresh(claim_id: str, p: Principal = Depends(require_customer), db: Session
     claim = customer_claim_or_404(db, p, claim_id)
     claim_svc.refresh_claim_analysis(db, claim)
     db.commit()
-    return claim_detail(db, claim, p.user)
+    return claim_detail(db, claim, p.user, p.lang)
 
 
 @router.post("/{claim_id}/submit")
@@ -186,7 +186,7 @@ def submit(claim_id: str, p: Principal = Depends(require_customer), db: Session 
     except claim_svc.TransitionError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     db.commit()
-    return {"approval": approval_svc.serialize(created.approval, created.token), "claim": claim_detail(db, claim, p.user)}
+    return {"approval": approval_svc.serialize(created.approval, created.token), "claim": claim_detail(db, claim, p.user, p.lang)}
 
 
 @router.get("/{claim_id}/pack")
@@ -225,7 +225,7 @@ def mark_sent(claim_id: str, body: MarkSentIn, p: Principal = Depends(require_cu
     except claim_svc.TransitionError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     db.commit()
-    return claim_detail(db, claim, p.user)
+    return claim_detail(db, claim, p.user, p.lang)
 
 
 class CommIn(BaseModel):
@@ -244,7 +244,7 @@ def create_communication(claim_id: str, body: CommIn, p: Principal = Depends(req
     policy = db.get(Policy, claim.policy_id) if claim.policy_id else None
     org = db.get(Organization, claim.insurer_org_id) if claim.insurer_org_id else None
     decision = db.execute(select(ClaimDecision).where(ClaimDecision.claim_id == claim.id).order_by(ClaimDecision.created_at.desc()).limit(1)).scalar_one_or_none()
-    d = comm_svc.draft(body.kind, user=p.user, claim=claim, policy=policy, org=org, decision=decision, points=body.points, documents=body.documents, lang=claim.language or p.user.locale)
+    d = comm_svc.draft(body.kind, user=p.user, claim=claim, policy=policy, org=org, decision=decision, points=body.points, documents=body.documents, lang=claim.language or p.lang)
     comm = Communication(claim_id=claim.id, policy_id=claim.policy_id, user_id=p.id, insurer_org_id=claim.insurer_org_id, direction="outbound", channel="in_app", kind=body.kind, subject=body.subject or d["subject"], body=body.body or d["body"], recipient=d["recipient"], status="draft", generated_by="user" if body.body else "agent")
     db.add(comm)
     db.flush()

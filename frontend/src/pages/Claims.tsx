@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Icon } from "../components/Icons";
 import { CustomerShell } from "../components/Layout";
 import { Badge, Empty, Field, Spinner, StatusBadge, useToast } from "../components/ui";
 import { api, errorMessage } from "../lib/api";
@@ -11,27 +12,34 @@ export interface ClaimSummary { id: string; reference: string; policy_id: string
 
 export default function ClaimsPage() {
   const { t, lang } = useLang();
+  const nav = useNavigate();
   const [claims, setClaims] = useState<ClaimSummary[] | null>(null);
-  useEffect(() => { api.get<{ claims: ClaimSummary[] }>("/api/claims").then((r) => setClaims(r.claims)); }, []);
+  useEffect(() => {
+    let alive = true;
+    api.get<{ claims: ClaimSummary[] }>("/api/claims").then((r) => alive && setClaims(r.claims));
+    return () => { alive = false; };
+  }, [lang]);
   return (
     <CustomerShell title={t("claims")} subtitle={lang === "zh" ? "从报告事件到结论的全部过程。" : "Everything from reporting an incident to the insurer's decision."} actions={<Link className="btn primary" to="/claims/new">{t("new_claim")}</Link>}>
-      {!claims ? <Spinner /> : claims.length === 0 ? <Empty>{lang === "zh" ? "还没有理赔。" : "No claims yet."}</Empty> : (
+      {!claims ? <Spinner /> : claims.length === 0 ? <Empty>{t("no_claims_yet")}</Empty> : (
         <div className="card">
-          <table className="table">
-            <thead><tr><th>Ref</th><th>{t("incident")}</th><th>{lang === "zh" ? "日期" : "Date"}</th><th>{t("status")}</th><th>{lang === "zh" ? "进度" : "Progress"}</th><th>{lang === "zh" ? "预计损失" : "Est. loss"}</th></tr></thead>
-            <tbody>
-              {claims.map((c) => (
-                <tr key={c.id} className="clickable" onClick={() => (window.location.href = `/claims/${c.id}`)}>
-                  <td className="mono"><Link to={`/claims/${c.id}`}>{c.reference}</Link></td>
-                  <td>{c.incident_type.replace(/_/g, " ")}<div className="small muted">{c.description?.slice(0, 70)}</div></td>
-                  <td>{fmtDate(c.incident_date, lang)}</td>
-                  <td><StatusBadge status={c.status} label={c.status_label} /><div className="small muted">{t("from")} {c.status_source} · {fmtDate(c.status_updated_at, lang)}</div></td>
-                  <td>{c.progress != null ? `${c.progress}%` : "—"}</td>
-                  <td>{money(c.estimated_loss, c.currency, lang)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="table-wrap">
+            <table className="table">
+              <thead><tr><th>{t("ref")}</th><th>{t("incident")}</th><th>{t("date_label")}</th><th>{t("status")}</th><th>{t("progress")}</th><th>{t("est_loss")}</th></tr></thead>
+              <tbody>
+                {claims.map((c) => (
+                  <tr key={c.id} className="clickable" onClick={() => nav(`/claims/${c.id}`)}>
+                    <td className="mono"><Link to={`/claims/${c.id}`} onClick={(e) => e.stopPropagation()}>{c.reference}</Link></td>
+                    <td>{c.incident_type.replace(/_/g, " ")}<div className="small muted">{c.description?.slice(0, 70)}</div></td>
+                    <td className="num">{fmtDate(c.incident_date, lang)}</td>
+                    <td><StatusBadge status={c.status} label={c.status_label} /><div className="small muted">{t("from")} {c.status_source} · {fmtDate(c.status_updated_at, lang)}</div></td>
+                    <td className="num">{c.progress != null ? `${c.progress}%` : "—"}</td>
+                    <td className="num">{money(c.estimated_loss, c.currency, lang)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </CustomerShell>
@@ -125,7 +133,7 @@ export function NewClaimPage() {
                   : q.type === "items" ? (
                     <div className="stack" style={{ gap: 6 }}>
                       {items.map((it, i) => (
-                        <div className="row" key={i}><input className="input" placeholder={lang === "zh" ? "物品" : "Item"} value={it.label} onChange={(e) => set("items_involved", items.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} /><input className="input" style={{ maxWidth: 140 }} type="number" placeholder={lang === "zh" ? "价值" : "Value"} value={it.value} onChange={(e) => set("items_involved", items.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))} /><button className="btn sm" onClick={() => set("items_involved", items.filter((_, j) => j !== i))}>✕</button></div>
+                        <div className="row" key={i}><input className="input" placeholder={lang === "zh" ? "物品" : "Item"} value={it.label} onChange={(e) => set("items_involved", items.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} /><input className="input" style={{ maxWidth: 140 }} type="number" placeholder={lang === "zh" ? "价值" : "Value"} value={it.value} onChange={(e) => set("items_involved", items.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))} /><button className="btn sm icon" aria-label={t("delete")} onClick={() => set("items_involved", items.filter((_, j) => j !== i))}><Icon name="x" size={14} /></button></div>
                       ))}
                       <button className="btn sm" style={{ alignSelf: "flex-start" }} onClick={() => set("items_involved", [...items, { label: "", value: "" }])}>+ {lang === "zh" ? "添加物品" : "Add item"}</button>
                     </div>

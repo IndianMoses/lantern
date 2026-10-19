@@ -1,9 +1,114 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { setApiLang } from "./api";
 
 export type Lang = "en" | "zh";
 
+/** BCP 47 locale used for Intl formatting. */
+export function localeOf(lang: Lang): string {
+  return lang === "zh" ? "zh-CN" : "en-GB";
+}
+
 const dict: Record<string, { en: string; zh: string }> = {
-  // navigation
+  // navigation and shell
+  home: { en: "Home", zh: "首页" },
+  insurance: { en: "Insurance", zh: "保险" },
+  more: { en: "More", zh: "更多" },
+  menu: { en: "Menu", zh: "菜单" },
+  notifications: { en: "Notifications", zh: "通知" },
+  mark_all_read: { en: "Mark all read", zh: "全部标为已读" },
+  nothing_yet: { en: "Nothing yet.", zh: "暂无内容。" },
+  ref: { en: "Ref", zh: "编号" },
+  updated: { en: "Updated", zh: "更新" },
+  date: { en: "Date", zh: "日期" },
+  progress: { en: "Progress", zh: "进度" },
+  est_loss: { en: "Est. loss", zh: "预计损失" },
+  customer_surface: { en: "Insurance assistant", zh: "保险助手" },
+  insurer_surface: { en: "Insurer workspace", zh: "保险公司工作台" },
+  bank_surface: { en: "Bank operations", zh: "银行运营" },
+  language_label: { en: "Language", zh: "语言" },
+  ask_assistant: { en: "Ask the assistant", zh: "问助手" },
+  open_gap_analysis: { en: "Open gap analysis", zh: "打开缺口分析" },
+  potential_not_determinations: { en: "Potential issues, not coverage determinations.", zh: "以上为潜在问题，不是保障结论。" },
+  renewals_within_60: { en: "renewal(s) within 60 days", zh: "份保单60天内到期" },
+  potential_gaps: { en: "potential gap(s)", zh: "个潜在缺口" },
+  no_gaps_flagged: { en: "no gaps flagged", zh: "无缺口" },
+  no_analysis_yet: { en: "no analysis yet", zh: "尚未分析" },
+  active_label: { en: "Active", zh: "有效" },
+  claim_word: { en: "claim", zh: "理赔" },
+  actions_pending: { en: "action(s) pending", zh: "项待办" },
+  priority_high: { en: "high", zh: "高" },
+  priority_medium: { en: "medium", zh: "中" },
+  priority_low: { en: "low", zh: "低" },
+  integration: { en: "Integration", zh: "集成" },
+  date_label: { en: "Date", zh: "日期" },
+  location: { en: "Location", zh: "地点" },
+  what_happened: { en: "What happened", zh: "经过" },
+  items: { en: "Items", zh: "涉及物品" },
+  no_claims_yet: { en: "No claims yet.", zh: "还没有理赔。" },
+  file: { en: "File", zh: "文件" },
+  type: { en: "Type", zh: "类型" },
+  linked_to: { en: "Linked to", zh: "关联" },
+  text_extraction: { en: "Text", zh: "文字提取" },
+  uploaded: { en: "Uploaded", zh: "上传时间" },
+  shared_with_insurer: { en: "shared with insurer", zh: "已发送给保险公司" },
+  delete: { en: "Delete", zh: "删除" },
+  claim: { en: "claim", zh: "理赔" },
+  policy: { en: "policy", zh: "保单" },
+  no_documents: { en: "No documents yet.", zh: "暂无文件" },
+  instruction_text_ignored: { en: "instruction like text (ignored)", zh: "含类似指令的文字（已忽略）" },
+  findings: { en: "Findings", zh: "发现" },
+  show_covered: { en: "Show covered items", zh: "显示已保障项" },
+  analysis_workspace_hint: { en: "Your declared assets and activities, checked clause by clause against every active policy.", zh: "把你申报的资产和活动与每份保单的条款逐一对照。" },
+  risk_graph: { en: "Risk and coverage graph", zh: "风险与保障图谱" },
+  analysis_progress: { en: "Analysis progress", zh: "分析进度" },
+  risk_priority: { en: "Risk priority", zh: "风险优先级" },
+  evidence_confidence: { en: "Evidence confidence", zh: "证据可信度" },
+  verification: { en: "Verification", zh: "核验" },
+  assumptions: { en: "Assumptions", zh: "假设" },
+  missing_information: { en: "Missing information", zh: "缺少的信息" },
+  next_step: { en: "Suggested next step", zh: "建议下一步" },
+  request_review: { en: "Request human review", zh: "申请人工复核" },
+  review_requested: { en: "Review requested", zh: "已申请复核" },
+  illustrative: { en: "Illustrative only, not an approved payout", zh: "仅为示意，不是核准赔付" },
+  filter: { en: "Filter", zh: "筛选" },
+  all: { en: "All", zh: "全部" },
+  list_view: { en: "List view", zh: "列表视图" },
+  graph_view: { en: "Graph view", zh: "图谱视图" },
+  zoom_in: { en: "Zoom in", zh: "放大" },
+  zoom_out: { en: "Zoom out", zh: "缩小" },
+  reset_view: { en: "Reset view", zh: "重置视图" },
+  relationships: { en: "Relationships", zh: "关联关系" },
+  stage_customer_context: { en: "Reading your profile and policies", zh: "读取你的资料和保单" },
+  stage_extraction: { en: "Extracting coverage terms", zh: "提取保障条款" },
+  stage_graph: { en: "Building the coverage graph", zh: "构建保障图谱" },
+  stage_analysts: { en: "Generating independent scenarios", zh: "生成独立情景分析" },
+  stage_challenge: { en: "Comparing model assessments", zh: "比较模型评估" },
+  stage_judge: { en: "Adjudicating the evidence", zh: "裁定证据" },
+  stage_verification: { en: "Verifying supporting evidence", zh: "核验支持证据" },
+  stage_calculation: { en: "Calculating supported scenarios", zh: "计算可支持的情景" },
+  stage_report: { en: "Preparing the final findings", zh: "整理最终发现" },
+  models_used: { en: "Models used", zh: "使用的模型" },
+  deterministic_mode: { en: "offline rules", zh: "离线规则" },
+  integrity_checks: { en: "Integrity checks", zh: "完整性检查" },
+  checks_note: { en: "Automated checks flag items for a person to look at. They never decide a claim or accuse anyone.", zh: "自动检查仅提示需要人工查看的事项，不会作出理赔结论或指控任何人。" },
+  passed: { en: "Passed", zh: "通过" },
+  warning: { en: "Warning", zh: "提示" },
+  failed_validation: { en: "Failed validation", zh: "未通过校验" },
+  inconclusive: { en: "Inconclusive", zh: "无法判断" },
+  human_review_required: { en: "Human review required", zh: "需人工复核" },
+  take_photo: { en: "Take a photo", zh: "拍照" },
+  choose_file: { en: "Choose a file", zh: "选择文件" },
+  install_app: { en: "Install the app", zh: "安装应用" },
+  security: { en: "Security", zh: "安全" },
+  sessions: { en: "Active sessions", zh: "活动会话" },
+  revoke: { en: "Sign out", zh: "注销" },
+  revoke_others: { en: "Sign out other devices", zh: "注销其他设备" },
+  this_device: { en: "this device", zh: "本设备" },
+  change_password: { en: "Change password", zh: "修改密码" },
+  current_password: { en: "Current password", zh: "当前密码" },
+  new_password: { en: "New password", zh: "新密码" },
+  consents: { en: "Data sharing and consent", zh: "数据共享与授权" },
+  consent_note: { en: "You decide what the platform may use and share. Each change is recorded.", zh: "由你决定平台可以使用和共享的内容，每次变更都会记录。" },
   overview: { en: "Overview", zh: "概览" },
   assistant: { en: "Assistant", zh: "助手" },
   my_insurance: { en: "My insurance", zh: "我的保险" },
@@ -138,23 +243,55 @@ export function tr(key: string, lang: Lang): string {
 
 interface LangCtx {
   lang: Lang;
+  /** BCP 47 locale for Intl formatting */
+  locale: string;
   setLang: (l: Lang) => void;
   t: (key: string) => string;
   pick: (obj: unknown) => string;
 }
 
-const Ctx = createContext<LangCtx>({ lang: "en", setLang: () => {}, t: (k) => k, pick: () => "" });
+const Ctx = createContext<LangCtx>({ lang: "en", locale: "en-GB", setLang: () => {}, t: (k) => k, pick: () => "" });
 
+function readStored(): Lang | null {
+  try {
+    const v = localStorage.getItem("lantern.lang");
+    return v === "zh" || v === "en" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * One authoritative locale state for the whole application.
+ * Every consumer subscribes through useLang(); the API client sends the
+ * active language with each request so server rendered labels match, and
+ * data hooks include `lang` in their dependencies so localised payloads are
+ * fetched again when the language changes.
+ */
 export function LangProvider({ children, initial }: { children: ReactNode; initial?: Lang }) {
-  const [lang, setLangState] = useState<Lang>(() => (initial || (localStorage.getItem("lantern.lang") as Lang) || "en"));
+  const [lang, setLangState] = useState<Lang>(() => {
+    const l = initial || readStored() || "en";
+    setApiLang(l);
+    return l;
+  });
+  useEffect(() => {
+    document.documentElement.lang = localeOf(lang);
+  }, [lang]);
   const setLang = useCallback((l: Lang) => {
+    // The API client must know the new language before any child effect
+    // refetches (child effects run before this provider's own effects).
+    setApiLang(l);
     setLangState(l);
-    localStorage.setItem("lantern.lang", l);
-    document.documentElement.lang = l === "zh" ? "zh-CN" : "en";
+    try {
+      localStorage.setItem("lantern.lang", l);
+    } catch {
+      /* storage unavailable (private mode); state still updates */
+    }
   }, []);
   const value = useMemo<LangCtx>(
     () => ({
       lang,
+      locale: localeOf(lang),
       setLang,
       t: (k: string) => tr(k, lang),
       pick: (obj: unknown) => {

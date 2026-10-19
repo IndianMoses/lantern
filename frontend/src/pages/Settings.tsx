@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Icon } from "../components/Icons";
 import { CustomerShell } from "../components/Layout";
 import { Field, Spinner, useToast } from "../components/ui";
 import { api, errorMessage } from "../lib/api";
@@ -62,7 +63,7 @@ export default function SettingsPage() {
                 <select className="select" style={{ maxWidth: 200 }} value={a.type} onChange={(e) => setP({ ...p, activities: p.activities.map((x, j) => (j === i ? { ...x, type: e.target.value } : x)) })}>{ACTIVITY_TYPES.map((x) => <option key={x} value={x}>{x.replace(/_/g, " ")}</option>)}</select>
                 <input className="input" placeholder={lang === "zh" ? "说明（例如：每年去美国旅行一次）" : "Detail (e.g. one trip to the USA a year)"} value={a.label} onChange={(e) => setP({ ...p, activities: p.activities.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)) })} />
                 {a.type === "travel" && <input className="input" style={{ maxWidth: 160 }} placeholder="USA, Spain" value={(a.destinations || []).join(", ")} onChange={(e) => setP({ ...p, activities: p.activities.map((x, j) => (j === i ? { ...x, destinations: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) } : x)) })} />}
-                <button className="btn sm" onClick={() => setP({ ...p, activities: p.activities.filter((_, j) => j !== i) })}>✕</button>
+                <button className="btn sm icon" aria-label={t("delete")} onClick={() => setP({ ...p, activities: p.activities.filter((_, j) => j !== i) })}><Icon name="x" size={14} /></button>
               </div>
             ))}
             <button className="btn sm" style={{ alignSelf: "flex-start" }} onClick={() => setP({ ...p, activities: [...p.activities, { type: "travel", label: "" }] })}>+ {lang === "zh" ? "添加" : "Add"}</button>
@@ -80,7 +81,7 @@ export default function SettingsPage() {
                 <td><input className="input" value={a.label} onChange={(e) => setP({ ...p, assets: p.assets.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)) })} /></td>
                 <td><input className="input" type="number" value={a.value ?? ""} onChange={(e) => setP({ ...p, assets: p.assets.map((x, j) => (j === i ? { ...x, value: e.target.value === "" ? null : Number(e.target.value) } : x)) })} /></td>
                 <td><input className="input" value={a.notes || ""} onChange={(e) => setP({ ...p, assets: p.assets.map((x, j) => (j === i ? { ...x, notes: e.target.value } : x)) })} /></td>
-                <td><button className="btn sm" onClick={() => setP({ ...p, assets: p.assets.filter((_, j) => j !== i) })}>✕</button></td>
+                <td><button className="btn sm icon" aria-label={t("delete")} onClick={() => setP({ ...p, assets: p.assets.filter((_, j) => j !== i) })}><Icon name="x" size={14} /></button></td>
               </tr>
             ))}
           </tbody>

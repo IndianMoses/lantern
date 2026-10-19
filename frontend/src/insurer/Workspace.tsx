@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Checklist, CompletenessPanel, CoverageViewPanel, MessageBlocks, type ChecklistItem, type Completeness, type CoverageView } from "../components/Blocks";
+import { Icon } from "../components/Icons";
 import { InsurerShell } from "../components/Layout";
 import { CitationChip, CitationProvider, Markdown, type ClauseRef } from "../components/Markdown";
 import { Badge, Field, Spinner, StatusBadge, useToast } from "../components/ui";
@@ -47,7 +48,7 @@ export default function WorkspacePage() {
   const [copilotText, setCopilotText] = useState("");
   const [copilotBusy, setCopilotBusy] = useState(false);
   const [showRun, setShowRun] = useState<string | null>(null);
-  const load = useCallback(() => api.get<Workspace>(`/api/insurer/claims/${id}`).then(setW), [id]);
+  const load = useCallback(() => api.get<Workspace>(`/api/insurer/claims/${id}`).then(setW), [id, lang]);
   useEffect(() => { load(); api.get<{ team: typeof team }>("/api/insurer/team").then((r) => setTeam(r.team)); setCopilotConv(null); setCopilotMsgs([]); }, [id, load]);
   if (!w) return <InsurerShell><Spinner /></InsurerShell>;
   const c = w.claim;
@@ -85,7 +86,7 @@ export default function WorkspacePage() {
   };
   const clauses: ClauseRef[] = [...w.clauses, ...clausesFromBlocks(copilotMsgs.flatMap((m) => m.blocks || []))];
   return (
-    <InsurerShell title={c.reference} subtitle={`${c.insurance_type_label} · ${c.incident_type_label} · ${w.customer.name}`} actions={<Link className="btn sm" to="/insurer/claims">← {t("queue")}</Link>}>
+    <InsurerShell title={c.reference} subtitle={`${c.insurance_type_label} · ${c.incident_type_label} · ${w.customer.name}`} actions={<Link className="btn sm" to="/insurer/claims"><Icon name="arrowLeft" size={14} /> {t("queue")}</Link>}>
       <CitationProvider clauses={clauses}>
         <div className="card" style={{ marginBottom: 14, display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
           <div><div className="small muted">{t("status")}</div><StatusBadge status={c.status} label={c.status_label} /> <span className="small muted">{c.status_source} · {fmtDateTime(c.updated_at, lang)}</span></div>
@@ -96,7 +97,7 @@ export default function WorkspacePage() {
           <div><div className="small muted">{lang === "zh" ? "客户预计损失" : "Customer estimate"}</div>{c.loss_unknown ? "unknown" : money(c.estimated_loss, c.currency, lang)}</div>
           <div><div className="small muted">{lang === "zh" ? "受理编号" : "Reference"}</div><span className="mono">{c.insurer_reference || "—"}</span></div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 16 }}>
+        <div className="workspace" style={{ gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 360px)" }}>
           <div>
             <div className="tabs">{(["case", "documents", "messages", "audit"] as const).map((k) => <button key={k} className={tab === k ? "active" : ""} onClick={() => setTab(k)}>{{ case: lang === "zh" ? "案件" : "Case", documents: `${lang === "zh" ? "文件" : "Documents"} (${w.documents.length})`, messages: `${lang === "zh" ? "沟通" : "Communications"} (${w.communications.length})`, audit: lang === "zh" ? "时间线与审计" : "Timeline & audit" }[k]}</button>)}</div>
             {tab === "case" && (
@@ -147,7 +148,7 @@ export default function WorkspacePage() {
                 {w.documents.map((d) => (
                   <div key={d.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
                     <div className="row between"><span><a href={`/api/documents/${d.id}/download`} target="_blank" rel="noreferrer">{d.filename}</a> <Badge plain>{d.doc_type}</Badge> {d.checklist_item_key && <span className="small muted">{d.checklist_item_key}</span>}</span><span className="small muted">{fmtDateTime(d.created_at, lang)} · {d.extraction_status} · sha256 {d.sha256.slice(0, 10)}</span></div>
-                    {d.injection_flags.length > 0 && <div className="alert warn small" style={{ marginTop: 6 }}>⚠ {lang === "zh" ? "文件中含有类似指令的文字，已被助手忽略：" : "This file contains instruction like text, ignored by the assistant:"} {d.injection_flags.map((f) => f.type).join(", ")}</div>}
+                    {d.injection_flags.length > 0 && <div className="alert warn small" style={{ marginTop: 6 }}><Icon name="warning" size={13} /> {lang === "zh" ? "文件中含有类似指令的文字，已被助手忽略：" : "This file contains instruction like text, ignored by the assistant:"} {d.injection_flags.map((f) => f.type).join(", ")}</div>}
                     {d.extracted_excerpt && <div className="small muted" style={{ marginTop: 4, whiteSpace: "pre-wrap" }}>{d.extracted_excerpt.slice(0, 300)}{d.extracted_excerpt.length > 300 ? "…" : ""}</div>}
                   </div>
                 ))}
@@ -217,7 +218,7 @@ export default function WorkspacePage() {
                 {copilotBusy && <Spinner />}
               </div>
               <div className="suggestions" style={{ margin: "8px 0" }}>{(lang === "zh" ? ["总结这个案件", "缺少什么材料？", "起草补充材料请求"] : ["Summarise this claim", "What is missing?", "Draft a request for the missing items"]).map((s) => <button key={s} onClick={() => copilot(s)}>{s}</button>)}</div>
-              <div className="row"><input className="input" value={copilotText} onChange={(e) => setCopilotText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && copilot(copilotText)} placeholder="…" /><button className="btn sm primary" disabled={copilotBusy} onClick={() => copilot(copilotText)}>→</button></div>
+              <div className="row"><input className="input" value={copilotText} onChange={(e) => setCopilotText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && copilot(copilotText)} placeholder="…" /><button className="btn sm primary icon" disabled={copilotBusy} aria-label={t("send")} onClick={() => copilot(copilotText)}><Icon name="send" size={14} /></button></div>
             </div>
             <span className="sr-only">{pick({ en: "" })}</span>
           </aside>

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { useLang } from "../lib/i18n";
+import { Icon } from "../components/Icons";
 import { LangToggle } from "../components/Layout";
+import { LanternMark } from "../components/Logo";
 
 interface DemoAccount { email: string; password: string; name: string; role: string; org?: string; locale: string }
 
@@ -11,6 +13,7 @@ export default function Login() {
   const { login, register } = useAuth();
   const { lang, setLang } = useLang();
   const nav = useNavigate();
+  const location = useLocation();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +29,9 @@ export default function Login() {
 
   const go = (user: { role: string; locale: "en" | "zh" }) => {
     setLang(user.locale);
-    nav(user.role === "customer" ? "/" : "/insurer");
+    const from = (location.state as { from?: string } | null)?.from;
+    const home = user.role === "customer" ? "/" : user.role === "bank_admin" ? "/bank" : "/insurer";
+    nav(from && from !== "/login" ? from : home, { replace: true });
   };
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,15 +64,16 @@ export default function Login() {
     <div className="login">
       <section className="hero">
         <div className="brand" style={{ padding: 0 }}>
-          <div className="mark" />
-          <div><b style={{ color: "#fff8ef" }}>Lantern</b></div>
+          <LanternMark size={34} tone="dark" />
+          <div className="brand-text"><b style={{ color: "#FFFFFF", fontSize: 20 }}>Lantern</b><span className="brand-sub" style={{ color: "var(--brand-on-dark)" }}>ClaimMate</span></div>
         </div>
         <h1>{lang === "zh" ? "逐条读懂你的保险。" : "Insurance, read by the clause."}</h1>
         <p>{lang === "zh" ? "一个会引用条款原文的保险助手：回答保单问题、找出保障缺口、把理赔材料准备好。任何发送都需要你亲自批准。" : "An assistant that answers from your own policy wording with clause citations, finds coverage gaps and overlaps, and prepares claims end to end. Anything that leaves the platform needs your explicit approval."}</p>
-        <div className="row" style={{ gap: 18, fontSize: 13, color: "#f3dcc3" }}>
-          <span>✓ {lang === "zh" ? "条款级引用" : "Clause level citations"}</span>
-          <span>✓ {lang === "zh" ? "中英双语" : "English & 中文"}</span>
-          <span>✓ {lang === "zh" ? "人工批准" : "Human approval tiers"}</span>
+        <div className="points">
+          <span><Icon name="check" size={14} /> {lang === "zh" ? "条款级引用" : "Clause level citations"}</span>
+          <span><Icon name="check" size={14} /> {lang === "zh" ? "中英双语" : "English & 中文"}</span>
+          <span><Icon name="check" size={14} /> {lang === "zh" ? "人工批准" : "Human approval tiers"}</span>
+          <span><Icon name="check" size={14} /> {lang === "zh" ? "可安装到手机" : "Installs on your phone"}</span>
         </div>
       </section>
       <section className="panel">
@@ -86,7 +92,7 @@ export default function Login() {
               <div><label className="field">{lang === "zh" ? "国家/地区" : "Country"}</label>
                 <select className="select" value={country} onChange={(e) => setCountry(e.target.value)}><option value="GB">United Kingdom</option><option value="CN">中国大陆</option><option value="HK">Hong Kong</option><option value="SG">Singapore</option></select></div>
             )}
-            {err && <div className="alert bad">{err}</div>}
+            {err && <div className="alert bad" role="alert">{err}</div>}
             <button className="btn primary" disabled={busy} type="submit">{mode === "login" ? (lang === "zh" ? "登录" : "Sign in") : lang === "zh" ? "注册" : "Register"}</button>
             <button type="button" className="btn ghost" onClick={() => setMode(mode === "login" ? "register" : "login")}>
               {mode === "login" ? (lang === "zh" ? "没有账户？创建一个" : "No account? Create one") : lang === "zh" ? "已有账户？登录" : "Have an account? Sign in"}
@@ -102,6 +108,10 @@ export default function Login() {
               <div className="small muted" style={{ marginTop: 6 }}>{lang === "zh" ? "保险公司员工" : "Insurer staff"}</div>
               {staff.filter((a) => ["jordan.reyes@northgate.example", "wang.lei@pengcheng.example", "morgan.clarke@northgate.example", "nia.williams@pawfield.example"].includes(a.email)).map((a) => (
                 <button type="button" key={a.email} onClick={() => quick(a)}><b>{a.name}</b> · {a.org} · {a.role.replace("insurer_", "")}</button>
+              ))}
+              {staff.some((a) => a.role === "bank_admin") && <div className="small muted" style={{ marginTop: 6 }}>{lang === "zh" ? "银行运营" : "Bank operations"}</div>}
+              {staff.filter((a) => a.role === "bank_admin").map((a) => (
+                <button type="button" key={a.email} onClick={() => quick(a)}><b>{a.name}</b> · {a.org}</button>
               ))}
             </div>
           )}

@@ -1,5 +1,8 @@
 // Small dependency free SVG charts for the operations dashboard.
-const PALETTE = ["#1f5f5b", "#c8641a", "#2b5aa6", "#6b4fa0", "#b7791f", "#2f7d4f", "#b3372f", "#7a8089"];
+// Neutral, brand aligned sequence (no blue, purple or teal). Series are also
+// labelled in the legend so meaning never depends on colour alone.
+const PALETTE = ["var(--brand-900)", "var(--brand-700)", "var(--text-secondary)", "var(--border-strong)", "var(--brand-border)", "var(--grey-300)", "var(--text-tertiary)", "var(--brand-100)"];
+const OUTCOME_COLOURS: Record<string, string> = { approved: "var(--success-text)", partially_approved: "var(--warning-text)", declined: "var(--danger-text)" };
 
 export function BarChart({ data, height = 180, valueKey = "count", labelKey = "label", color, horizontal }: { data: Record<string, unknown>[]; height?: number; valueKey?: string; labelKey?: string; color?: string; horizontal?: boolean }) {
   const values = data.map((d) => Number(d[valueKey] || 0));
@@ -14,7 +17,7 @@ export function BarChart({ data, height = 180, valueKey = "count", labelKey = "l
           return (
             <g key={i} transform={`translate(0, ${i * rowH + 6})`}>
               <text x="0" y="14" style={{ fontSize: 11 }}>{String(d[labelKey]).slice(0, 26)}</text>
-              <rect x="150" y="3" width={w} height="16" rx="4" fill={color || PALETTE[i % PALETTE.length]} />
+              <rect x="150" y="3" width={w} height="16" rx="4" fill={color || "var(--brand-700)"} />
               <text x={150 + w + 6} y="15" style={{ fontSize: 11, fill: "var(--ink-2)" }}>{String(d[valueKey])}</text>
             </g>
           );
@@ -33,7 +36,7 @@ export function BarChart({ data, height = 180, valueKey = "count", labelKey = "l
         const x = pad + i * ((w - pad * 2) / Math.max(1, data.length)) + 4;
         return (
           <g key={i}>
-            <rect x={x} y={height - 30 - bh} width={bw} height={bh} rx="4" fill={color || PALETTE[i % PALETTE.length]} />
+            <rect x={x} y={height - 30 - bh} width={bw} height={bh} rx="4" fill={color || "var(--brand-700)"} />
             <text x={x + bw / 2} y={height - 36 - bh} textAnchor="middle" style={{ fontSize: 11, fill: "var(--ink-2)" }}>{v}</text>
             <text x={x + bw / 2} y={height - 14} textAnchor="middle" style={{ fontSize: 10 }}>{String(d[labelKey]).slice(0, 14)}</text>
           </g>
@@ -43,7 +46,7 @@ export function BarChart({ data, height = 180, valueKey = "count", labelKey = "l
   );
 }
 
-export function LineChart({ data, height = 160, valueKey = "count", labelKey = "week", color = "#1f5f5b" }: { data: Record<string, unknown>[]; height?: number; valueKey?: string; labelKey?: string; color?: string }) {
+export function LineChart({ data, height = 160, valueKey = "count", labelKey = "week", color = "var(--brand-900)" }: { data: Record<string, unknown>[]; height?: number; valueKey?: string; labelKey?: string; color?: string }) {
   const w = 480;
   const pad = 28;
   const values = data.map((d) => Number(d[valueKey] || 0));
@@ -85,7 +88,7 @@ export function StackedBars({ data, keys, labelKey = "month", height = 170 }: { 
                 const v = Number(d[k] || 0);
                 const bh = (v / max) * (height - 50);
                 y -= bh;
-                return <rect key={k} x={pad + i * slot + 5} y={y} width={bw} height={bh} fill={PALETTE[ki % PALETTE.length]} rx="2" />;
+                return <rect key={k} x={pad + i * slot + 5} y={y} width={bw} height={bh} fill={OUTCOME_COLOURS[k] || PALETTE[ki % PALETTE.length]} rx="2" />;
               })}
               <text x={pad + i * slot + 5 + bw / 2} y={height - 12} textAnchor="middle" style={{ fontSize: 10 }}>{String(d[labelKey])}</text>
             </g>
@@ -94,7 +97,7 @@ export function StackedBars({ data, keys, labelKey = "month", height = 170 }: { 
       </svg>
       <div className="legend">
         {keys.map((k, i) => (
-          <span key={k} style={{ ["--c" as string]: PALETTE[i % PALETTE.length] }}>{k.replace(/_/g, " ")}</span>
+          <span key={k} style={{ ["--c" as string]: OUTCOME_COLOURS[k] || PALETTE[i % PALETTE.length] }}>{k.replace(/_/g, " ")}</span>
         ))}
       </div>
     </div>

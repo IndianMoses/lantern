@@ -28,7 +28,7 @@ def list_policies(p: Principal = Depends(require_customer), db: Session = Depend
     for pid in open_claims:
         if pid:
             counts[pid] = counts.get(pid, 0) + 1
-    return {"policies": [pol_svc.policy_card(x, p.user.locale, claims_open=counts.get(x.id, 0)) for x in pols], "renewals": pol_svc.renewal_reminders(pols, lang=p.user.locale)}
+    return {"policies": [pol_svc.policy_card(x, p.lang, claims_open=counts.get(x.id, 0)) for x in pols], "renewals": pol_svc.renewal_reminders(pols, lang=p.lang)}
 
 
 @router.get("/insurance-types")
@@ -61,10 +61,10 @@ def get_policy(policy_id: str, p: Principal = Depends(require_customer), db: Ses
     org = db.get(Organization, policy.insurer_org_id) if policy.insurer_org_id else None
     claims = db.execute(select(Claim).where(Claim.policy_id == policy.id).order_by(Claim.created_at.desc())).scalars().all()
     return {
-        "policy": pol_svc.policy_card(policy, p.user.locale),
+        "policy": pol_svc.policy_card(policy, p.lang),
         "insurer": {"name": org.name, "claims_email": org.claims_email, "integration_mode": org.integration_mode} if org else None,
         "clauses": [pol_svc.clause_dict(c, policy.policy_number) for c in clauses],
-        "claims": [pol_svc.claim_summary(c, p.user.locale) for c in claims],
+        "claims": [pol_svc.claim_summary(c, p.lang) for c in claims],
         "timeline": pol_svc.timeline_for_policy(db, policy),
     }
 
@@ -116,7 +116,7 @@ def patch_policy(policy_id: str, body: PolicyPatch, p: Principal = Depends(requi
 
         claim_svc.refresh_claim_analysis(db, c)
     db.commit()
-    return {"policy": pol_svc.policy_card(policy, p.user.locale)}
+    return {"policy": pol_svc.policy_card(policy, p.lang)}
 
 
 @router.delete("/{policy_id}")
@@ -170,7 +170,7 @@ def upload_policy(
 ):
     doc = store_upload(db, owner_id=p.id, uploader_id=p.id, upload=file, doc_type="policy_wording")
     text = doc.extracted_text or ""
-    meta = guess_metadata(text, doc.filename) if text else {"insurance_type_guess": insurance_type or "home", "language": p.user.locale}
+    meta = guess_metadata(text, doc.filename) if text else {"insurance_type_guess": insurance_type or "home", "language": p.lang}
     clauses = segment_clauses(text) if text else []
     itype = insurance_type if insurance_type in INSURANCE_TYPES else meta.get("insurance_type_guess", "home")
     lang = meta.get("language") or detect_language(text or "en")
@@ -206,7 +206,7 @@ def upload_policy(
     audit.record(db, actor_type="customer", actor_id=p.id, action="policy.upload", target_type="policy", target_id=policy.id, details={"clauses": len(clauses), "injection_flags": len(doc.injection_flags or []), "document_id": doc.id}, commit=False)
     db.commit()
     return {
-        "policy": pol_svc.policy_card(policy, p.user.locale),
+        "policy": pol_svc.policy_card(policy, p.lang),
         "extraction": {"metadata_guess": meta, "clauses_found": len(clauses), "text_extracted": bool(text), "injection_flags": doc.injection_flags, "matched_insurer": ({"id": matched_org.id, "name": matched_org.name} if matched_org else None), "note": "Review the extracted details, correct anything wrong, then confirm to activate the policy."},
         "clauses": [{"clause_ref": c["ref"], "title": c["title"], "kind": c["kind"], "tags": c["tags"], "confidence": c.get("confidence", 0.65)} for c in clauses[:40]],
     }

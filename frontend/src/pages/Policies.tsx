@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { Icon } from "../components/Icons";
 import { CustomerShell } from "../components/Layout";
 import { CitationProvider, type ClauseRef } from "../components/Markdown";
 import { Badge, Empty, Field, Modal, Spinner, StatusBadge, useToast } from "../components/ui";
@@ -21,7 +22,7 @@ export default function PoliciesPage() {
   const [meta, setMeta] = useState({ provider_name: "", product_name: "", insurance_type: "home", policy_number: "", start_date: "", end_date: "", premium_amount: "", excess_amount: "" });
   const [busy, setBusy] = useState(false);
   const load = () => api.get<{ policies: PolicyCard[]; renewals: typeof renewals }>("/api/policies").then((r) => { setPolicies(r.policies); setRenewals(r.renewals); });
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [lang]);
   const upload = async () => {
     if (!file) return;
     setBusy(true);
@@ -30,7 +31,7 @@ export default function PoliciesPage() {
     Object.entries(meta).forEach(([k, v]) => v && form.append(k, v));
     try {
       const r = await api.upload<{ policy: PolicyCard; extraction: { clauses_found: number; matched_insurer: { name: string } | null; injection_flags: unknown[] } }>("/api/policies/upload", form);
-      toast(`${r.extraction.clauses_found} ${lang === "zh" ? "条条款已提取" : "clauses extracted"}${r.extraction.injection_flags.length ? " ⚠" : ""}`);
+      toast(`${r.extraction.clauses_found} ${lang === "zh" ? "条条款已提取" : "clauses extracted"}${r.extraction.injection_flags.length ? (lang === "zh" ? "（含指令类文字，已忽略）" : " (instruction like text found and ignored)") : ""}`);
       setUploadOpen(false);
       nav(`/policies/${r.policy.id}`);
     } catch (e) {
@@ -43,7 +44,7 @@ export default function PoliciesPage() {
     <CustomerShell title={t("my_insurance")} subtitle={lang === "zh" ? "你的保单、条款与续保提醒。" : "Your policies, their clauses and renewal reminders."} actions={<button className="btn primary" onClick={() => setUploadOpen(true)}>{t("upload_policy")}</button>}>
       {renewals.length > 0 && (
         <div className="alert warn" style={{ marginBottom: 14 }}>
-          {renewals.map((r) => <div key={r.policy_id}>⏰ <Link to={`/policies/${r.policy_id}`}>{r.message}</Link></div>)}
+          {renewals.map((r) => <div key={r.policy_id} className="row" style={{ gap: 6 }}><Icon name="clock" size={14} /><Link to={`/policies/${r.policy_id}`}>{r.message}</Link></div>)}
         </div>
       )}
       {!policies ? <Spinner /> : policies.length === 0 ? <Empty>{lang === "zh" ? "还没有保单。上传一份保单文件开始。" : "No policies yet. Upload a policy document to begin."}</Empty> : (
@@ -95,7 +96,7 @@ export function PolicyDetailPage() {
   const [editing, setEditing] = useState(false);
   const [showTr, setShowTr] = useState<Record<string, boolean>>({});
   const load = () => api.get<PolicyDetail>(`/api/policies/${id}`).then(setData);
-  useEffect(() => { load(); api.get<{ insurers: Insurer[] }>("/api/policies/insurers").then((r) => setInsurers(r.insurers)); }, [id]);
+  useEffect(() => { load(); api.get<{ insurers: Insurer[] }>("/api/policies/insurers").then((r) => setInsurers(r.insurers)); }, [id, lang]);
   if (!data) return <CustomerShell><Spinner /></CustomerShell>;
   const p = data.policy;
   const kinds = ["all", "coverage", "exclusion", "condition", "limit", "claims_procedure", "definition"];

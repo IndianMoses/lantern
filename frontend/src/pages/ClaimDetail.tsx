@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApprovalCard, Checklist, CompletenessPanel, CoverageViewPanel, DraftCard, type Approval, type ChecklistItem, type Completeness, type CoverageView } from "../components/Blocks";
+import { Icon } from "../components/Icons";
 import { CustomerShell } from "../components/Layout";
 import { CitationProvider, CitationChip, type ClauseRef } from "../components/Markdown";
 import { Badge, Field, Modal, Spinner, StatusBadge, useToast } from "../components/ui";
@@ -42,7 +43,7 @@ export default function ClaimDetailPage() {
   const [markSent, setMarkSent] = useState(false);
   const [sentForm, setSentForm] = useState({ channel: "email", reference: "" });
   const [busy, setBusy] = useState(false);
-  const load = useCallback(() => api.get<Detail>(`/api/claims/${id}`).then(setD), [id]);
+  const load = useCallback(() => api.get<Detail>(`/api/claims/${id}`).then(setD), [id, lang]);
   useEffect(() => { load(); }, [load]);
   if (!d) return <CustomerShell><Spinner /></CustomerShell>;
   const c = d.claim;
@@ -187,7 +188,7 @@ export default function ClaimDetailPage() {
               <h3>{t("documents")} <span className="muted small">({d.documents.length})</span></h3>
               {d.documents.length === 0 ? <div className="small muted">—</div> : d.documents.map((x) => (
                 <div key={x.id} className="row between" style={{ padding: "6px 0", borderBottom: "1px solid var(--line)" }}>
-                  <span><a href={`/api/documents/${x.id}/download`} target="_blank" rel="noreferrer">{x.filename}</a> <span className="small muted">{x.doc_type}{x.checklist_item_key ? ` · ${x.checklist_item_key}` : ""}</span>{x.injection_flags?.length ? <Badge tone="warn" plain>⚠ {lang === "zh" ? "含指令文字" : "instruction text"}</Badge> : null}</span>
+                  <span><a href={`/api/documents/${x.id}/download`} target="_blank" rel="noreferrer">{x.filename}</a> <span className="small muted">{x.doc_type}{x.checklist_item_key ? ` · ${x.checklist_item_key}` : ""}</span>{x.injection_flags?.length ? <Badge tone="warn" plain><Icon name="warning" size={13} /> {lang === "zh" ? "含指令文字" : "instruction text"}</Badge> : null}</span>
                   <span className="small muted">{x.submitted_at ? (lang === "zh" ? "已发送" : "shared") : lang === "zh" ? "未发送" : "not shared"}</span>
                 </div>
               ))}

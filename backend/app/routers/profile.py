@@ -57,7 +57,7 @@ def put_profile(body: ProfileIn, p: Principal = Depends(require_customer), db: S
 
 @router.get("/overview")
 def overview(p: Principal = Depends(require_customer), db: Session = Depends(get_db)):
-    return pol_svc.overview(db, p.user)
+    return pol_svc.overview(db, p.user, lang=p.lang)
 
 
 @router.get("/notifications")

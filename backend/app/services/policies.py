@@ -91,8 +91,8 @@ def renewal_reminders(policies: list[Policy], reminder_days: list[int] | None = 
     return out
 
 
-def overview(db: Session, user: User) -> dict:
-    lang = user.locale or "en"
+def overview(db: Session, user: User, lang: str | None = None) -> dict:
+    lang = lang or user.locale or "en"
     pols = user_policies(db, user.id)
     active = [p for p in pols if p.status == "active"]
     claims = list(db.execute(select(Claim).where(Claim.user_id == user.id).order_by(Claim.updated_at.desc())).scalars())
